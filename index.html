@@ -1037,71 +1037,88 @@ async function buildQueue(){
   const dec=decade==='all'?null:parseInt(decade);
   const seen=new Set();
 
+  // ── PHASE 1: build from hardcoded arrays immediately (synchronous) ──
   // 1. STATION COLLECTIONS
   const filteredStations=dec?STATIONS.filter(s=>s.decades.includes(dec)):STATIONS;
   for(const s of filteredStations){
-    if(!seen.has(s.id)){
-      seen.add(s.id);
-      const matchDec=dec||s.decades[Math.floor(Math.random()*s.decades.length)];
-      queue.push({id:s.id,title:s.title,subtitle:s.city+' · '+s.net,year:String(matchDec)+'s'});
-    }
+    if(!seen.has(s.id)){seen.add(s.id);const matchDec=dec||s.decades[Math.floor(Math.random()*s.decades.length)];queue.push({id:s.id,title:s.title,subtitle:s.city+' · '+s.net,year:String(matchDec)+'s'});}
   }
-
   // 2. VERIFIED INDIVIDUAL EPISODES
   const filteredEps=dec?EPISODES.filter(e=>e.decade===dec):EPISODES;
   for(const e of filteredEps){
-    if(!seen.has(e.id)){
-      seen.add(e.id);
-      queue.push({id:e.id,title:e.title,subtitle:e.city+' · '+e.net,year:String(e.decade)+'s'});
-    }
+    if(!seen.has(e.id)){seen.add(e.id);queue.push({id:e.id,title:e.title,subtitle:e.city+' · '+e.net,year:String(e.decade)+'s'});}
   }
-
-  // 3. MAJOR NEWS EVENTS — landmark moment broadcasts
+  // 3. MAJOR NEWS EVENTS
   const filteredEvents=dec?EVENTS.filter(e=>e.decade===dec):EVENTS;
   for(const e of filteredEvents){
-    if(!seen.has(e.id)){
-      seen.add(e.id);
-      queue.push({id:e.id,title:e.title,subtitle:'Historic Broadcast',year:e.year});
-    }
+    if(!seen.has(e.id)){seen.add(e.id);queue.push({id:e.id,title:e.title,subtitle:'Historic Broadcast',year:e.year});}
   }
-
-  // 4. LOCAL NEWS — landmark local market stories
+  // 4. LOCAL NEWS
   const filteredLocal=dec?LOCAL_NEWS.filter(l=>l.decade===dec):LOCAL_NEWS;
   for(const l of filteredLocal){
-    if(!seen.has(l.id)){
-      seen.add(l.id);
-      queue.push({id:l.id,title:l.title,subtitle:l.market+' · Local',year:String(l.decade)+'s'});
-    }
+    if(!seen.has(l.id)){seen.add(l.id);queue.push({id:l.id,title:l.title,subtitle:l.market+' · Local',year:String(l.decade)+'s'});}
   }
-
-  // 5. INTERNATIONAL NEWS (BBC, CBC, ITN)
+  // 5. INTERNATIONAL
   const filteredIntl=dec?INTERNATIONAL.filter(i=>i.decades.includes(dec)):INTERNATIONAL;
   for(const i of filteredIntl){
-    if(!seen.has(i.id)){
-      seen.add(i.id);
-      const matchDec=dec||i.decades[Math.floor(Math.random()*i.decades.length)];
-      queue.push({id:i.id,title:i.title,subtitle:i.city+' · '+i.net,year:String(matchDec)+'s'});
-    }
+    if(!seen.has(i.id)){seen.add(i.id);const matchDec=dec||i.decades[Math.floor(Math.random()*i.decades.length)];queue.push({id:i.id,title:i.title,subtitle:i.city+' · '+i.net,year:String(matchDec)+'s'});}
   }
-
-  // 6. NEWSREELS — shown for 1940s/50s/60s filters and ALL
-  const showNewsreels = !dec || dec <= 1960;
+  // 6. NEWSREELS
+  const showNewsreels=!dec||dec<=1960;
   if(showNewsreels){
-    const filteredReels = dec ? NEWSREELS.filter(n=>n.decade===dec) : NEWSREELS;
+    const filteredReels=dec?NEWSREELS.filter(n=>n.decade===dec):NEWSREELS;
     for(const n of filteredReels){
-      if(!seen.has(n.id)){
-        seen.add(n.id);
-        queue.push({id:n.id, title:n.title, subtitle:'Newsreel · '+n.year, year:n.year});
-      }
+      if(!seen.has(n.id)){seen.add(n.id);queue.push({id:n.id,title:n.title,subtitle:'Newsreel · '+n.year,year:n.year});}
     }
   }
 
-  // 7. LIVE IA SEARCH — runs for all eras, queries multiple collections
-  const iaItems = await fetchIA(dec);
-  for(const item of iaItems){if(!seen.has(item.id)){seen.add(item.id);queue.push(item);}}
-
+  // ── Commit phase 1 immediately so monitors start playing ────────────
   shuffle(queue);
   queue=queue.filter(q=>!badIds.has(q.id));
+  flushQueueUI();
+  if(queue.length) {
+    assignAll();
+    // On iOS, autoplay requires a moment after page interaction settles.
+    // Re-assign monitor 0 after a short delay to ensure the first video loads.
+    if(mobileMode) setTimeout(() => { if(queue.length) assignMonitor(0, 0); }, 800);
+  }
+
+  // ── PHASE 2: fetch live IA results in background, append when ready ─
+  // Use sessionStorage to cache per decade so switching eras is instant
+  const cacheKey = `nv_ia_${decade}`;
+  let cached = null;
+  try { cached = JSON.parse(sessionStorage.getItem(cacheKey)); } catch(e){}
+
+  if(cached){
+    appendIAResults(cached, seen);
+  } else {
+    fetchIA(dec).then(iaItems => {
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(iaItems)); } catch(e){}
+      appendIAResults(iaItems, seen);
+    });
+  }
+}
+
+function appendIAResults(iaItems, seen){
+  if(!iaItems?.length) return;
+  let added = 0;
+  for(const item of iaItems){
+    if(!seen.has(item.id) && !badIds.has(item.id)){
+      seen.add(item.id);
+      queue.push(item);
+      added++;
+    }
+  }
+  if(!added) return;
+  // shuffle just the new items in at random positions
+  for(let i=queue.length-added;i<queue.length;i++){
+    const j=Math.floor(Math.random()*(i+1));
+    [queue[i],queue[j]]=[queue[j],queue[i]];
+  }
+  flushQueueUI();
+}
+
+function flushQueueUI(){
   if(!queue.length){
     document.getElementById('queue-scroll').innerHTML='<div class="empty-state">No broadcasts found.<br>Try another era.</div>';
     document.getElementById('q-count').textContent='0';
@@ -1113,7 +1130,8 @@ async function buildQueue(){
   document.getElementById('s-queue').textContent=`QUEUE: ${queue.length}`;
   document.getElementById('ticker-text').textContent=queue.map(q=>q.title+(q.subtitle?' — '+q.subtitle:'')).join('   ·   ');
   renderQueuePanel();
-  assignAll();
+  // If monitors haven't been assigned yet (first load), kick them off now
+  if(monitors.length && playingIndices.every(i => i === -1)) assignAll();
 }
 
 async function fetchIA(dec){
@@ -1121,49 +1139,25 @@ async function fetchIA(dec){
   const y0 = dec ? dec : 1950;
   const y1 = dec ? Math.min(dec + 9, now) : now;
 
-  const ROWS = 25;
+  const ROWS = 15;
   const fl   = '&fl[]=identifier&fl[]=title&fl[]=year&output=json&sort[]=random';
   const base = 'https://archive.org/advancedsearch.php?rows=' + ROWS + fl;
   const yr   = `year:[${y0} TO ${y1}]`;
 
-  // Only query collections that are explicitly news/public-affairs.
-  // Dropped: loose subject tag searches (too noisy — returns Howdy Doody, etc.)
   const queries = [
-    // Local TV news archive — verified news station recordings
     `collection:localnewsarchive AND mediatype:movies AND ${yr}`,
-    // Captioned TV news archive (2009+)
     `collection:tvnews AND mediatype:movies AND ${yr}`,
-    // News & public affairs — public TV/radio news, 1950s–2000s
     `collection:newsandpublicaffairs AND mediatype:movies AND ${yr}`,
-    // CSPAN collections — all news/government by definition
-    `collection:c-span AND mediatype:movies AND ${yr}`,
-    // For pre-1970: add a title-constrained search for known news keywords
-    ...(y0 < 1970 ? [
-      `title:(news OR newscast OR "evening news" OR "nightly news" OR "special report" OR broadcast) AND mediatype:movies AND ${yr}`,
-    ] : []),
   ];
 
-  // Words in titles that are strong signals of non-news content.
-  // If a title matches any of these, skip it.
-  const BLOCKLIST = /comedy|funny|cartoon|animation|sitcom|soap opera|game show|variety|music video|movie|film|documentary(?! news)|sermon|church|cooking|sports highlight|wrestling|howdy|doody|sketch|standup|stand-up|podcast|interview show|talk show|late night|tonight show|letterman|fallon|conan|kimmel|colbert|daily show|saturday night live|SNL/i;
-
-  // Words that confirm it's news content — at least one must appear in title.
-  const NEWSLIST = /news|newscast|broadcast|report|journal|nightly|evening|morning|special report|bulletin|update|coverage|affairs|anchor|correspondent|breaking|CBS|NBC|ABC|CNN|FOX|MSNBC|BBC|CBC|AP |UPI |WBBM|WCBS|WNBC|KABC|KNBC|KTLA|KPIX|KGO|KRON|WLS|WMAQ|WTVJ|WSVN|WXYZ|WDIV|WWJ|WJBK|KHOU|KTRK|KPRC|WFAA|KDFW|KXAS|WSB|WAGA|WGCL|WBZ|WCVB|WHDH|WBAL|WJZ|WMAR|KYW|WPVI|WCAU|WEWS|WJW|WKYC|WTOL|WTVG|KSAT|WOAI|KENS|KING|KIRO|KOMO|KXLY|KOIN|KGW/i;
+  const BLOCKLIST = /comedy|funny|cartoon|animation|sitcom|soap opera|game show|variety|music video|wrestling|howdy|doody|sketch|standup|stand-up|podcast|talk show|late night|tonight show|letterman|fallon|conan|kimmel|colbert|daily show|saturday night live/i;
 
   const results = await Promise.allSettled(
     queries.map(q =>
       fetch(`${base}&q=${encodeURIComponent(q)}&page=1`)
         .then(r => r.json())
         .then(d => (d.response?.docs || [])
-          .filter(doc => {
-            const t = (doc.title || doc.identifier || '').trim();
-            // Must not match blocklist
-            if(BLOCKLIST.test(t)) return false;
-            // For non-collection queries, require a news keyword in title
-            // Collection queries (localnewsarchive, tvnews, etc.) are trusted enough alone
-            if(q.startsWith('title:') && !NEWSLIST.test(t)) return false;
-            return true;
-          })
+          .filter(doc => !BLOCKLIST.test(doc.title || ''))
           .map(doc => ({
             id:       doc.identifier,
             title:    doc.title || doc.identifier,
@@ -1175,7 +1169,6 @@ async function fetchIA(dec){
     )
   );
 
-  // Merge, deduplicate by id
   const seen = new Set();
   const merged = [];
   for(const r of results){
