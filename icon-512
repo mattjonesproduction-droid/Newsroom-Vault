@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0c0d0f" rx="64"/>
+  <line x1="0" y1="128" x2="512" y2="128" stroke="#1e2128" stroke-width="1"/>
+  <line x1="0" y1="256" x2="512" y2="256" stroke="#1e2128" stroke-width="1"/>
+  <line x1="0" y1="384" x2="512" y2="384" stroke="#1e2128" stroke-width="1"/>
+  <line x1="128" y1="0" x2="128" y2="512" stroke="#1e2128" stroke-width="1"/>
+  <line x1="256" y1="0" x2="256" y2="512" stroke="#1e2128" stroke-width="1"/>
+  <line x1="384" y1="0" x2="384" y2="512" stroke="#1e2128" stroke-width="1"/>
+  <polygon points="42,288 434,288 470,358 434,422 42,422" fill="#e8c84a"/>
+  <text x="68" y="392" font-family="Arial Black, sans-serif" font-weight="900" font-size="90" fill="#0a0800" letter-spacing="6">VAULT</text>
+  <text x="42" y="272" font-family="Arial, sans-serif" font-weight="400" font-size="30" fill="#e8c84a" letter-spacing="14" opacity="0.85">NEWSROOM</text>
+  <line x1="42" y1="280" x2="348" y2="280" stroke="#e8c84a" stroke-width="2" opacity="0.5"/>
+  <circle cx="448" cy="108" r="20" fill="#4ae870" opacity="0.85"/>
+  <circle cx="448" cy="108" r="12" fill="#4ae870"/>
+</svg>
