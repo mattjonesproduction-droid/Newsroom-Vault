@@ -1003,7 +1003,7 @@ function setLayout(n){
 }
 
 function buildMonitors(){
-  const cfg=LAYOUTS[IS_IOS?1:layout], wall=document.getElementById('monitor-wall');
+  const cfg=LAYOUTS[mobileMode?1:layout], wall=document.getElementById('monitor-wall');
   wall.style.gridTemplateColumns=`repeat(${cfg.cols},1fr)`;
   wall.style.gridTemplateRows=`repeat(${cfg.rows},1fr)`;
   wall.innerHTML=''; monitors=[]; playingIndices=[];
@@ -1322,11 +1322,10 @@ function exitFullscreen() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') exitFullscreen(); });
 
 // ── MOBILE DETECTION — use screen width, not user agent ──────────────
-// Any screen narrower than 1024px gets single-feed mobile mode.
-// This reliably catches all iPads and phones regardless of user agent.
 const IS_IOS = window.innerWidth < 1024 || window.screen.width < 1024;
+let mobileMode = IS_IOS; // mutable flag — toggled by switchToDesktop/switchToMobile
 
-if(IS_IOS) {
+if(mobileMode) {
   document.body.classList.add('ios-mode');
   layout = 1;
 }
@@ -1426,6 +1425,32 @@ function renderQueuePanel() {
   if(document.getElementById('ios-drawer')?.classList.contains('open')) {
     iosRenderQueue();
   }
+}
+
+// ── DESKTOP / MOBILE MODE TOGGLE ─────────────────────────────────────
+function switchToDesktop(){
+  mobileMode = false;
+  document.body.classList.remove('ios-mode');
+  layout = 2;
+  buildMonitors();
+  // show a "back to mobile" button in the header
+  const hdr = document.querySelector('.header');
+  if(!document.getElementById('mobile-btn')){
+    const btn = document.createElement('button');
+    btn.id = 'mobile-btn';
+    btn.textContent = '⊟ MOBILE';
+    btn.style.cssText = 'flex:0;font-size:0.52rem;padding:4px 8px;border-color:#555;color:#666;margin-left:8px;';
+    btn.onclick = switchToMobile;
+    hdr.appendChild(btn);
+  }
+}
+function switchToMobile(){
+  mobileMode = true;
+  document.body.classList.add('ios-mode');
+  layout = 1;
+  const btn = document.getElementById('mobile-btn');
+  if(btn) btn.remove();
+  buildMonitors();
 }
 
 buildMonitors();buildQueue();
