@@ -192,6 +192,8 @@ body.ios-mode .ios-toolbar {
 .ios-drawer .q-meta { font-size: 0.58rem; }
 .ios-drawer-footer { padding: 12px 14px; border-top: 1px solid var(--border-hot); display: flex; gap: 8px; flex-shrink: 0; }
 .ios-drawer-footer button { padding: 12px; font-size: 0.65rem; }
+.load-more-btn { padding: 10px 14px; font-size: 0.58rem; color: var(--accent2); letter-spacing: 0.12em; cursor: pointer; text-align: center; border-top: 1px solid var(--border); opacity: 0.7; transition: opacity 0.15s; }
+.load-more-btn:hover { opacity: 1; }
 </style>
 
 <div class="fs-backdrop" id="fs-backdrop" onclick="exitFullscreen()"></div>
@@ -1078,28 +1080,30 @@ async function buildQueue(){
   flushQueueUI();
   if(queue.length) {
     assignAll();
-    // On iOS, autoplay requires a moment after page interaction settles.
-    // Re-assign monitor 0 after a short delay to ensure the first video loads.
     if(mobileMode) setTimeout(() => { if(queue.length) assignMonitor(0, 0); }, 800);
   }
+  // Phase 2 is now on-demand — user clicks "Load More" to fetch live results
+}
 
-  // ── PHASE 2: fetch live IA results in background, append when ready ─
-  // Use sessionStorage to cache per decade so switching eras is instant
+function loadMoreFromIA(){
+  const btn = document.querySelector('.load-more-btn');
+  if(btn){ btn.innerHTML = '<span class="spin"></span> LOADING...'; btn.onclick = null; }
+  const dec = decade==='all' ? null : parseInt(decade);
+  const seen = new Set(queue.map(q => q.id));
   const cacheKey = `nv_ia_${decade}`;
   let cached = null;
   try { cached = JSON.parse(sessionStorage.getItem(cacheKey)); } catch(e){}
-
   if(cached){
     appendIAResults(cached, seen);
+    if(btn) btn.remove();
   } else {
     fetchIA(dec).then(iaItems => {
       try { sessionStorage.setItem(cacheKey, JSON.stringify(iaItems)); } catch(e){}
       appendIAResults(iaItems, seen);
+      if(btn) btn.remove();
     });
   }
 }
-
-function appendIAResults(iaItems, seen){
   if(!iaItems?.length) return;
   let added = 0;
   for(const item of iaItems){
@@ -1130,6 +1134,15 @@ function flushQueueUI(){
   document.getElementById('s-queue').textContent=`QUEUE: ${queue.length}`;
   document.getElementById('ticker-text').textContent=queue.map(q=>q.title+(q.subtitle?' — '+q.subtitle:'')).join('   ·   ');
   renderQueuePanel();
+  // Append "Load More" button at bottom of queue unless already fetched
+  const scroll = document.getElementById('queue-scroll');
+  if(scroll && !scroll.querySelector('.load-more-btn')){
+    const btn = document.createElement('div');
+    btn.className = 'load-more-btn';
+    btn.innerHTML = '＋ LOAD MORE FROM ARCHIVE';
+    btn.onclick = loadMoreFromIA;
+    scroll.appendChild(btn);
+  }
   // If monitors haven't been assigned yet (first load), kick them off now
   if(monitors.length && playingIndices.every(i => i === -1)) assignAll();
 }
