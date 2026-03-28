@@ -114,6 +114,59 @@ button.primary:hover { background: #f0d060; }
 .monitor.is-fullscreen .mon-fs { color: var(--accent); }
 .fs-backdrop { display: none; position: fixed; inset: 0; background: #000; z-index: 8999; }
 .fs-backdrop.active { display: block; }
+/* ── iOS SINGLE-FEED MODE ── */
+body.ios-mode .side-panel { display: none; }
+body.ios-mode .status-strip { display: none; }
+body.ios-mode .layout { flex-direction: column; }
+body.ios-mode .monitor-wall { padding: 0; gap: 0; grid-template-columns: 1fr !important; grid-template-rows: 1fr !important; }
+body.ios-mode .monitor { border-radius: 0; border: none; }
+body.ios-mode .monitor::before, body.ios-mode .monitor::after { display: none; }
+body.ios-mode .monitor-label { height: 52px; padding: 0 16px; background: var(--metal); border-top: 2px solid var(--border-hot); }
+body.ios-mode .mon-ch { font-size: 0.85rem; }
+body.ios-mode .mon-title { font-size: 0.65rem; }
+body.ios-mode .mon-year { font-size: 0.65rem; }
+body.ios-mode .mon-next { font-size: 0.72rem; padding: 8px 14px; border-color: var(--accent2); color: var(--accent2); }
+body.ios-mode .mon-fs { font-size: 1.1rem; padding: 6px 10px; }
+/* iOS toolbar */
+.ios-toolbar { display: none; }
+body.ios-mode .ios-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 52px; background: var(--metal); border-top: 2px solid var(--border-hot);
+  padding: 0 16px; gap: 10px; flex-shrink: 0;
+}
+.ios-toolbar-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1rem; letter-spacing: 0.2em; color: var(--accent); flex: 1; }
+.ios-toolbar-btn { background: var(--bg); border: 1px solid var(--border-hot); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; padding: 8px 12px; border-radius: 3px; cursor: pointer; letter-spacing: 0.08em; white-space: nowrap; flex: 0; text-transform: uppercase; }
+.ios-toolbar-btn.active { border-color: var(--accent); color: var(--accent); background: #1a1a10; }
+/* iOS drawer */
+.ios-drawer {
+  display: none; position: fixed; inset: 0; z-index: 500;
+}
+.ios-drawer.open { display: flex; flex-direction: column; justify-content: flex-end; }
+.ios-drawer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
+.ios-drawer-sheet {
+  position: relative; background: var(--metal); border-top: 2px solid var(--border-hot);
+  border-radius: 12px 12px 0 0; max-height: 82vh; display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.ios-drawer-handle { width: 36px; height: 4px; background: var(--border-hot); border-radius: 2px; margin: 12px auto 8px; flex-shrink: 0; }
+.ios-drawer-tabs { display: flex; border-bottom: 1px solid var(--border-hot); flex-shrink: 0; }
+.ios-tab { flex: 1; padding: 10px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; }
+.ios-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.ios-tab-content { display: none; flex: 1; overflow-y: auto; }
+.ios-tab-content.active { display: flex; flex-direction: column; }
+/* era grid in drawer */
+.ios-drawer .era-grid { padding: 12px; gap: 8px; }
+.ios-drawer .era-btn { padding: 10px 4px; font-size: 0.68rem; }
+/* search in drawer */
+.ios-drawer .search-row { padding: 12px 14px; }
+.ios-drawer .search-input { font-size: 0.7rem; padding: 10px; }
+.ios-drawer .search-status { padding: 0 14px 8px; }
+/* queue in drawer */
+.ios-drawer .q-item { padding: 10px 14px; }
+.ios-drawer .q-title { font-size: 0.68rem; white-space: normal; }
+.ios-drawer .q-meta { font-size: 0.58rem; }
+.ios-drawer-footer { padding: 12px 14px; border-top: 1px solid var(--border-hot); display: flex; gap: 8px; flex-shrink: 0; }
+.ios-drawer-footer button { padding: 12px; font-size: 0.65rem; }
 </style>
 
 <div class="fs-backdrop" id="fs-backdrop" onclick="exitFullscreen()"></div>
@@ -182,6 +235,62 @@ button.primary:hover { background: #f0d060; }
   <div class="strip-item"><div class="strip-dot amber"></div><span id="s-queue">QUEUE: 0</span></div>
   <div class="strip-item" style="flex:1;overflow:hidden;">
     <div class="ticker"><span class="ticker-inner" id="ticker-text">INITIALIZING BROADCAST WALL...</span></div>
+  </div>
+</div>
+
+<!-- iOS single-feed toolbar (hidden on desktop) -->
+
+<div class="ios-toolbar">
+  <div class="ios-toolbar-title">NEWSROOM<span style="color:var(--text-dim);font-weight:300"> / </span>VAULT</div>
+  <button class="ios-toolbar-btn" onclick="iosDrawerOpen('era')">ERA</button>
+  <button class="ios-toolbar-btn" onclick="iosDrawerOpen('search')">SEARCH</button>
+  <button class="ios-toolbar-btn" onclick="iosDrawerOpen('queue')" id="ios-queue-btn">QUEUE</button>
+</div>
+
+<!-- iOS slide-up drawer -->
+
+<div class="ios-drawer" id="ios-drawer">
+  <div class="ios-drawer-backdrop" onclick="iosDrawerClose()"></div>
+  <div class="ios-drawer-sheet">
+    <div class="ios-drawer-handle"></div>
+    <div class="ios-drawer-tabs">
+      <div class="ios-tab active" data-tab="era" onclick="iosTabSwitch(this)">Era</div>
+      <div class="ios-tab" data-tab="search" onclick="iosTabSwitch(this)">Search</div>
+      <div class="ios-tab" data-tab="queue" onclick="iosTabSwitch(this)">Queue <span id="ios-q-count" style="color:var(--accent2)"></span></div>
+    </div>
+    <!-- Era tab -->
+    <div class="ios-tab-content active" id="ios-tab-era">
+      <div class="era-grid" style="padding:12px;gap:8px;">
+        <div class="era-btn active" data-decade="all"  onclick="setDecade(this)">ALL</div>
+        <div class="era-btn" data-decade="1940" onclick="setDecade(this)">1940s</div>
+        <div class="era-btn" data-decade="1950" onclick="setDecade(this)">1950s</div>
+        <div class="era-btn" data-decade="1960" onclick="setDecade(this)">1960s</div>
+        <div class="era-btn" data-decade="1970" onclick="setDecade(this)">1970s</div>
+        <div class="era-btn" data-decade="1980" onclick="setDecade(this)">1980s</div>
+        <div class="era-btn" data-decade="1990" onclick="setDecade(this)">1990s</div>
+        <div class="era-btn" data-decade="2000" onclick="setDecade(this)">2000s</div>
+        <div class="era-btn" data-decade="2010" onclick="setDecade(this)">2010s</div>
+        <div class="era-btn" data-decade="2020" onclick="setDecade(this)">2020s</div>
+      </div>
+    </div>
+    <!-- Search tab -->
+    <div class="ios-tab-content" id="ios-tab-search">
+      <div class="search-row" style="padding:12px 14px;">
+        <input id="ios-search-input" class="search-input" style="font-size:0.7rem;padding:10px;" type="text" placeholder="date · city · subject..." autocomplete="off" oninput="iosFilterQueue(this.value)">
+        <button class="search-clear" id="ios-search-clear" onclick="iosClearSearch()">×</button>
+      </div>
+      <div id="ios-search-status" class="search-status" style="padding:0 14px 8px;"></div>
+      <div class="queue-scroll" id="ios-queue-scroll" style="flex:1;"></div>
+    </div>
+    <!-- Queue tab -->
+    <div class="ios-tab-content" id="ios-tab-queue">
+      <div class="queue-scroll" id="ios-queue-scroll-main" style="flex:1;"></div>
+    </div>
+    <div class="ios-drawer-footer">
+      <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
+      <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
+      <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
+    </div>
   </div>
 </div>
 
@@ -1174,6 +1283,111 @@ function exitFullscreen() {
   fullscreenMonitor = -1;
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') exitFullscreen(); });
+
+// ── iOS DETECTION & SINGLE-FEED MODE ─────────────────────────────────
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+if(IS_IOS) {
+  document.body.classList.add('ios-mode');
+}
+
+// Sync era button active state across both desktop and iOS drawer
+const _origSetDecade = setDecade;
+// setDecade is already defined above; we'll patch renderQueuePanel to also
+// update the iOS queue after it runs.
+
+// ── iOS DRAWER ───────────────────────────────────────────────────────
+function iosDrawerOpen(tab) {
+  document.getElementById('ios-drawer').classList.add('open');
+  // switch to requested tab
+  document.querySelectorAll('.ios-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.ios-tab-content').forEach(c =>
+    c.classList.toggle('active', c.id === `ios-tab-${tab}`));
+  if(tab === 'queue') iosRenderQueue();
+  if(tab === 'search') {
+    iosRenderQueue(); // populate search results pane too
+    setTimeout(() => document.getElementById('ios-search-input')?.focus(), 100);
+  }
+}
+function iosDrawerClose() {
+  document.getElementById('ios-drawer').classList.remove('open');
+}
+function iosTabSwitch(btn) {
+  document.querySelectorAll('.ios-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.ios-tab-content').forEach(c =>
+    c.classList.toggle('active', c.id === `ios-tab-${tab}`));
+  if(tab === 'queue' || tab === 'search') iosRenderQueue();
+}
+
+// ── iOS QUEUE RENDER ─────────────────────────────────────────────────
+function iosRenderQueue(filter) {
+  const term = (filter ?? document.getElementById('ios-search-input')?.value ?? '').trim().toLowerCase();
+  const active = new Set(playingIndices);
+
+  // Render into both queue tab and search tab scroll areas
+  ['ios-queue-scroll-main', 'ios-queue-scroll'].forEach(scrollId => {
+    const scroll = document.getElementById(scrollId);
+    if(!scroll) return;
+    scroll.innerHTML = '';
+    let visible = 0;
+    queue.forEach((item, i) => {
+      if(term) {
+        const text = (item.title + ' ' + (item.subtitle || '') + ' ' + (item.year || '')).toLowerCase();
+        if(!text.includes(term)) return;
+      }
+      visible++;
+      const playing = active.has(i);
+      const div = document.createElement('div');
+      div.className = 'q-item' + (playing ? ' playing' : '');
+      div.style.cssText = 'padding:12px 14px;';
+      div.innerHTML = `<span class="q-num">${String(i+1).padStart(2,'0')}</span><div class="q-info"><div class="q-title" style="font-size:0.68rem;white-space:normal;">${esc(item.title)}</div><div class="q-meta" style="font-size:0.58rem;margin-top:3px;">${esc(item.subtitle||item.year||'')}</div></div>`;
+      div.onclick = () => { assignMonitor(0, i); playingIndices[0] = i; iosDrawerClose(); };
+      scroll.appendChild(div);
+    });
+    if(!visible) scroll.innerHTML = `<div class="empty-state">${term ? 'No matches' : 'Queue empty'}</div>`;
+  });
+
+  // Update count badge
+  const ct = document.getElementById('ios-q-count');
+  if(ct) ct.textContent = queue.length ? `(${queue.length})` : '';
+}
+
+// ── iOS SEARCH ───────────────────────────────────────────────────────
+let iosSearchTerm = '';
+function iosFilterQueue(val) {
+  iosSearchTerm = val.trim().toLowerCase();
+  const clearBtn = document.getElementById('ios-search-clear');
+  const status   = document.getElementById('ios-search-status');
+  if(clearBtn) clearBtn.classList.toggle('visible', iosSearchTerm.length > 0);
+  iosRenderQueue(iosSearchTerm);
+  // update match count
+  const scroll = document.getElementById('ios-queue-scroll');
+  const shown = scroll ? scroll.querySelectorAll('.q-item').length : 0;
+  if(status) status.textContent = iosSearchTerm ? (shown ? `${shown} match${shown===1?'':'es'}` : 'No matches') : '';
+}
+function iosClearSearch() {
+  const input = document.getElementById('ios-search-input');
+  if(input) input.value = '';
+  iosFilterQueue('');
+  input?.focus();
+}
+
+// Patch renderQueuePanel to also refresh iOS queue if drawer is open
+const _baseRenderQueuePanel = renderQueuePanel;
+function renderQueuePanel() {
+  _baseRenderQueuePanel();
+  // update iOS count badge whenever queue renders
+  const ct = document.getElementById('ios-q-count');
+  if(ct) ct.textContent = queue.length ? `(${queue.length})` : '';
+  // if drawer is open, refresh it too
+  if(document.getElementById('ios-drawer')?.classList.contains('open')) {
+    iosRenderQueue();
+  }
+}
 
 buildMonitors();buildQueue();
 </script>
