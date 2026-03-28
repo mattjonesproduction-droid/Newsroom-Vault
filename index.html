@@ -1290,15 +1290,14 @@ function exitFullscreen() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') exitFullscreen(); });
 
-// ── iOS DETECTION & SINGLE-FEED MODE ─────────────────────────────────
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-               (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||
-               ('ontouchstart' in window && /Apple/.test(navigator.vendor));
+// ── MOBILE DETECTION — use screen width, not user agent ──────────────
+// Any screen narrower than 1024px gets single-feed mobile mode.
+// This reliably catches all iPads and phones regardless of user agent.
+const IS_IOS = window.innerWidth < 1024 || window.screen.width < 1024;
 
 if(IS_IOS) {
   document.body.classList.add('ios-mode');
-  layout = 1; // force single monitor before buildMonitors() runs
+  layout = 1;
 }
 
 // Sync era button active state across both desktop and iOS drawer
