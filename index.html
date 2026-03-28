@@ -117,6 +117,7 @@ button.primary:hover { background: #f0d060; }
 /* ── iOS SINGLE-FEED MODE ── */
 body.ios-mode .side-panel { display: none; }
 body.ios-mode .status-strip { display: none; }
+/* hide layout switcher in header on iOS — not needed */
 body.ios-mode .layout { flex-direction: column; }
 body.ios-mode .monitor-wall { padding: 0; gap: 0; grid-template-columns: 1fr !important; grid-template-rows: 1fr !important; }
 body.ios-mode .monitor { border-radius: 0; border: none; }
@@ -971,7 +972,7 @@ function setLayout(n){
 }
 
 function buildMonitors(){
-  const cfg=LAYOUTS[layout], wall=document.getElementById('monitor-wall');
+  const cfg=LAYOUTS[IS_IOS?1:layout], wall=document.getElementById('monitor-wall');
   wall.style.gridTemplateColumns=`repeat(${cfg.cols},1fr)`;
   wall.style.gridTemplateRows=`repeat(${cfg.rows},1fr)`;
   wall.innerHTML=''; monitors=[]; playingIndices=[];
@@ -990,8 +991,13 @@ function buildMonitors(){
 }
 
 function setDecade(btn){
+  // sync active state across both desktop sidebar and iOS drawer era grids
   document.querySelectorAll('.era-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); decade=btn.dataset.decade; buildQueue();
+  // mark all buttons with matching decade as active (covers both sidebar + drawer)
+  document.querySelectorAll(`.era-btn[data-decade="${btn.dataset.decade}"]`).forEach(b=>b.classList.add('active'));
+  decade=btn.dataset.decade;
+  if(IS_IOS) iosDrawerClose();
+  buildQueue();
 }
 
 async function buildQueue(){
@@ -1286,10 +1292,13 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') exitFullscre
 
 // ── iOS DETECTION & SINGLE-FEED MODE ─────────────────────────────────
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+               (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||
+               ('ontouchstart' in window && /Apple/.test(navigator.vendor));
 
 if(IS_IOS) {
   document.body.classList.add('ios-mode');
+  layout = 1; // force single monitor before buildMonitors() runs
 }
 
 // Sync era button active state across both desktop and iOS drawer
