@@ -18,8 +18,30 @@ body {
 }
 .header { height: 48px; background: var(--metal); border-bottom: 2px solid var(--border-hot); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: relative; z-index: 100; flex-shrink: 0; }
 .header::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.4; }
-.sys-id { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.2rem; letter-spacing: 0.25em; color: var(--accent); }
-.sys-id span { color: var(--text-dim); font-weight: 300; }
+.sys-id {
+  display: flex; flex-direction: column; justify-content: center; gap: 0; line-height: 1;
+  position: relative;
+}
+.sys-id-main {
+  display: flex; align-items: stretch; gap: 0;
+}
+.sys-id-band {
+  background: var(--accent); padding: 2px 7px 2px 0;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+  font-size: 1.15rem; letter-spacing: 0.18em; color: #0a0800;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 0 100%);
+  padding-right: 14px;
+}
+.sys-id-word {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+  font-size: 1.15rem; letter-spacing: 0.18em; color: var(--text-bright);
+  padding-left: 9px; display: flex; align-items: center;
+}
+.sys-id-rule {
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 60%, transparent 100%);
+  opacity: 0.6;
+}
 .header-center { display: flex; align-items: center; gap: 20px; }
 .live-indicator { display: flex; align-items: center; gap: 7px; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--live); }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); animation: pulse-live 1.4s ease-in-out infinite; }
@@ -174,7 +196,13 @@ body.ios-mode .ios-toolbar {
 
 <div class="fs-backdrop" id="fs-backdrop" onclick="exitFullscreen()"></div>
 <div class="header">
-  <div class="sys-id">BROADCAST<span> /</span> WALL <span>— MONITOR SYSTEM</span></div>
+  <div class="sys-id">
+    <div class="sys-id-main">
+      <div class="sys-id-band">NEWSROOM</div>
+      <div class="sys-id-word">VAULT</div>
+    </div>
+    <div class="sys-id-rule"></div>
+  </div>
   <div class="header-center">
     <div class="live-indicator"><div class="live-dot"></div>ARCHIVE STREAM</div>
     <div class="feed-count">FEEDS: <strong id="active-feeds">0</strong></div>
@@ -244,10 +272,11 @@ body.ios-mode .ios-toolbar {
 <!-- iOS single-feed toolbar (hidden on desktop) -->
 
 <div class="ios-toolbar">
-  <div class="ios-toolbar-title">NEWSROOM<span style="color:var(--text-dim);font-weight:300"> / </span>VAULT</div>
+  <div class="ios-toolbar-title"><span style="background:var(--accent);color:#0a0800;font-weight:900;padding:1px 12px 1px 4px;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,0 100%);margin-right:7px;">NEWSROOM</span>VAULT</div>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('era')">ERA</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('search')">SEARCH</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('queue')" id="ios-queue-btn">QUEUE</button>
+  <button class="ios-toolbar-btn" onclick="switchToDesktop()" style="border-color:#555;color:#666;" title="Switch to multi-feed desktop layout">⊞</button>
 </div>
 
 <!-- iOS slide-up drawer -->
