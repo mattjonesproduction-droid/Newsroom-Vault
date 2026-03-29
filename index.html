@@ -1112,7 +1112,8 @@ function loadMoreFromIA(){
     });
   }
 }
-  if(!iaItems?.length) return;
+
+function appendIAResults(iaItems, seen){
   let added = 0;
   for(const item of iaItems){
     if(!seen.has(item.id) && !badIds.has(item.id)){
