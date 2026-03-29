@@ -119,9 +119,6 @@ body {
 button { background: var(--bg); border: 1px solid var(--border-hot); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; padding: 7px 10px; cursor: pointer; border-radius: 2px; transition: all 0.15s; text-transform: uppercase; flex: 1; }
 button:hover { border-color: var(--text-dim); color: var(--text-bright); }
 button.primary { background: var(--accent); color: #0a0800; border-color: var(--accent); font-weight: 600; }
-button.primary:hover { background: #f0d060; }
-.autoplay-row { display: flex; align-items: center; justify-content: space-between; }
-.autoplay-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.1em; }
 .toggle { width: 32px; height: 17px; background: var(--border-hot); border-radius: 9px; cursor: pointer; position: relative; transition: all 0.2s; border: 1px solid var(--border-hot); }
 .toggle.on { background: #2a2a10; border-color: var(--accent); }
 .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; background: var(--text-dim); border-radius: 50%; transition: all 0.2s; }
@@ -271,10 +268,6 @@ body.ios-mode .ios-toolbar {
       <div class="ctrl-row">
         <button onclick="refreshAll()">↺ SHUFFLE</button>
         <button class="primary" onclick="advanceAll()">NEXT ALL ▶</button>
-      </div>
-      <div class="autoplay-row">
-        <span class="autoplay-label">AUTO-CYCLE</span>
-        <div class="toggle on" id="autoplay-toggle" onclick="toggleAutoplay()"></div>
       </div>
     </div>
   </div>
@@ -1175,7 +1168,7 @@ const LOCAL_NEWS = [
 ];
 
 const LAYOUTS = { 1:{cols:1,rows:1,count:1}, 2:{cols:2,rows:2,count:4}, 3:{cols:3,rows:2,count:6} };
-let queue=[], playingIndices=[], layout=2, decade='all', autoplay=true, autoplayTimer=null, monitors=[];
+let queue=[], playingIndices=[], layout=2, decade='all', monitors=[];
 const badIds = new Set(); // IDs confirmed as 404/not found — never load again
 
 // mobileMode declared early — used in buildMonitors before IS_IOS is evaluated
@@ -1405,7 +1398,6 @@ function assignAll(){
   if(!queue.length)return;
   let ptr=0;
   for(let i=0;i<monitors.length;i++){assignMonitor(i,ptr%queue.length);ptr++;}
-  scheduleAutoplay();
 }
 
 function assignMonitor(mi,qi){
@@ -1453,8 +1445,8 @@ function assignMonitor(mi,qi){
   renderQueuePanel();
 }
 
-function advanceAll(){clearTimeout(autoplayTimer);for(let i=0;i<monitors.length;i++){const n=(playingIndices[i]+monitors.length)%queue.length;assignMonitor(i,n);playingIndices[i]=n;}scheduleAutoplay();}
-function advanceMonitor(mi){
+function advanceAll(){for(let i=0;i<monitors.length;i++){const n=(playingIndices[i]+monitors.length)%queue.length;assignMonitor(i,n);playingIndices[i]=n;}}
+function refreshAll(){shuffle(queue);assignAll();}function advanceMonitor(mi){
   const others=new Set(playingIndices.filter((_,i)=>i!==mi));
   let n=((playingIndices[mi]||0)+1)%queue.length;
   let tries=0;
@@ -1464,12 +1456,7 @@ function advanceMonitor(mi){
 }
 function refreshAll(){shuffle(queue);assignAll();}
 
-function scheduleAutoplay(){
-  clearTimeout(autoplayTimer);
-  if(!autoplay)return;
-  autoplayTimer=setTimeout(()=>{for(let i=0;i<monitors.length;i++)setTimeout(()=>advanceMonitor(i),i*1800);scheduleAutoplay();},9*60*1000);
-}
-function toggleAutoplay(){autoplay=!autoplay;document.getElementById('autoplay-toggle').classList.toggle('on',autoplay);if(autoplay)scheduleAutoplay();else clearTimeout(autoplayTimer);}
+function toggleAutoplay(){}
 
 // Declare searchTerm early — used inside renderQueuePanel
 let searchTerm = '';
