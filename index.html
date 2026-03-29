@@ -1289,6 +1289,11 @@ function renderQueuePanel(){
   });
   const fp=scroll.querySelector('.playing');if(fp)fp.scrollIntoView({block:'nearest',behavior:'smooth'});
   if(searchTerm) filterQueue(searchTerm);
+  // update iOS count badge
+  const ct=document.getElementById('ios-q-count');
+  if(ct) ct.textContent=queue.length?`(${queue.length})`:'';
+  // if iOS drawer is open, refresh it too
+  if(document.getElementById('ios-drawer')?.classList.contains('open')) iosRenderQueue();
 }
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
@@ -1418,19 +1423,6 @@ function iosClearSearch() {
   if(input) input.value = '';
   iosFilterQueue('');
   input?.focus();
-}
-
-// Patch renderQueuePanel to also refresh iOS queue if drawer is open
-const _baseRenderQueuePanel = renderQueuePanel;
-function renderQueuePanel() {
-  _baseRenderQueuePanel();
-  // update iOS count badge whenever queue renders
-  const ct = document.getElementById('ios-q-count');
-  if(ct) ct.textContent = queue.length ? `(${queue.length})` : '';
-  // if drawer is open, refresh it too
-  if(document.getElementById('ios-drawer')?.classList.contains('open')) {
-    iosRenderQueue();
-  }
 }
 
 // ── DESKTOP / MOBILE MODE TOGGLE ─────────────────────────────────────
