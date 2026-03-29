@@ -1079,39 +1079,38 @@ function setDecade(btn){
   buildQueue();
 }
 
+// ── RANDOM SAMPLE helper ─────────────────────────────────────────────
+function sample(arr, n){
+  if(n >= arr.length) return [...arr];
+  const copy=[...arr];
+  for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
+  return copy.slice(0,n);
+}
+
 async function buildQueue(){
   queue=[];
   document.getElementById('queue-scroll').innerHTML='<div class="empty-state"><span class="spin"></span><br><br>Loading broadcasts...</div>';
   const dec=decade==='all'?null:parseInt(decade);
   const seen=new Set();
 
-  // ── PHASE 1: build from hardcoded arrays immediately (synchronous) ──
-  // 1. STATION COLLECTIONS
-  const filteredStations=dec?STATIONS.filter(s=>s.decades.includes(dec)):STATIONS;
-  for(const s of filteredStations){
-    if(!seen.has(s.id)){seen.add(s.id);const matchDec=dec||s.decades[Math.floor(Math.random()*s.decades.length)];queue.push({id:s.id,title:s.title,subtitle:s.city+' · '+s.net,year:String(matchDec)+'s'});}
-  }
-  // 2. VERIFIED INDIVIDUAL EPISODES
-  const filteredEps=dec?EPISODES.filter(e=>e.decade===dec):EPISODES;
-  for(const e of filteredEps){
-    if(!seen.has(e.id)){seen.add(e.id);queue.push({id:e.id,title:e.title,subtitle:e.city+' · '+e.net,year:String(e.decade)+'s'});}
-  }
-  // 3. MAJOR NEWS EVENTS
+  // ── TIER 1: Always include — curated highlights ──────────────────────
+  // EVENTS, LOCAL_NEWS, EPISODES always appear every session
   const filteredEvents=dec?EVENTS.filter(e=>e.decade===dec):EVENTS;
   for(const e of filteredEvents){
     if(!seen.has(e.id)){seen.add(e.id);queue.push({id:e.id,title:e.title,subtitle:'Historic Broadcast',year:e.year});}
   }
-  // 4. LOCAL NEWS
   const filteredLocal=dec?LOCAL_NEWS.filter(l=>l.decade===dec):LOCAL_NEWS;
   for(const l of filteredLocal){
     if(!seen.has(l.id)){seen.add(l.id);queue.push({id:l.id,title:l.title,subtitle:l.market+' · Local',year:String(l.decade)+'s'});}
   }
-  // 5. INTERNATIONAL
+  const filteredEps=dec?EPISODES.filter(e=>e.decade===dec):EPISODES;
+  for(const e of filteredEps){
+    if(!seen.has(e.id)){seen.add(e.id);queue.push({id:e.id,title:e.title,subtitle:e.city+' · '+e.net,year:String(e.decade)+'s'});}
+  }
   const filteredIntl=dec?INTERNATIONAL.filter(i=>i.decades.includes(dec)):INTERNATIONAL;
   for(const i of filteredIntl){
     if(!seen.has(i.id)){seen.add(i.id);const matchDec=dec||i.decades[Math.floor(Math.random()*i.decades.length)];queue.push({id:i.id,title:i.title,subtitle:i.city+' · '+i.net,year:String(matchDec)+'s'});}
   }
-  // 6. NEWSREELS
   const showNewsreels=!dec||dec<=1960;
   if(showNewsreels){
     const filteredReels=dec?NEWSREELS.filter(n=>n.decade===dec):NEWSREELS;
@@ -1120,15 +1119,31 @@ async function buildQueue(){
     }
   }
 
-  // ── Commit phase 1 immediately so monitors start playing ────────────
+  // ── TIER 2: Random sample of stations — different every session ───────
+  // Pick 60 random stations from the filtered pool each launch
+  const filteredStations=dec?STATIONS.filter(s=>s.decades.includes(dec)):STATIONS;
+  for(const s of sample(filteredStations, 60)){
+    if(!seen.has(s.id)){seen.add(s.id);const matchDec=dec||s.decades[Math.floor(Math.random()*s.decades.length)];queue.push({id:s.id,title:s.title,subtitle:s.city+' · '+s.net,year:String(matchDec)+'s'});}
+  }
+
+  // ── Commit immediately so monitors start playing ──────────────────────
   shuffle(queue);
   queue=queue.filter(q=>!badIds.has(q.id));
   flushQueueUI();
-  if(queue.length) {
+  if(queue.length){
     assignAll();
-    if(mobileMode) setTimeout(() => { if(queue.length) assignMonitor(0, 0); }, 800);
+    if(mobileMode) setTimeout(()=>{ if(queue.length) assignMonitor(0,0); }, 800);
   }
-  // Phase 2 is now on-demand — user clicks "Load More" to fetch live results
+
+  // ── Auto-fetch live results after 15s — silent background load ────────
+  // Clear any previous auto-fetch timer so era switches don't stack
+  clearTimeout(window._autoFetchTimer);
+  window._autoFetchTimer = setTimeout(()=>{
+    // Only run if user hasn't already clicked Load More
+    if(document.querySelector('.load-more-btn')){
+      loadMoreFromIA();
+    }
+  }, 15000);
 }
 
 function loadMoreFromIA(){
