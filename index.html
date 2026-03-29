@@ -1003,6 +1003,11 @@ const LAYOUTS = { 1:{cols:1,rows:1,count:1}, 2:{cols:2,rows:2,count:4}, 3:{cols:
 let queue=[], playingIndices=[], layout=2, decade='all', autoplay=true, autoplayTimer=null, monitors=[];
 const badIds = new Set(); // IDs confirmed as 404/not found — never load again
 
+// mobileMode declared early — used in buildMonitors before IS_IOS is evaluated
+const IS_IOS = window.innerWidth < 1024 || window.screen.width < 1024;
+let mobileMode = IS_IOS;
+if(mobileMode){ document.body.classList.add('ios-mode'); layout=1; }
+
 function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.toTimeString().slice(0,8);}
 setInterval(updateClock,1000); updateClock();
 
@@ -1335,20 +1340,6 @@ function exitFullscreen() {
   fullscreenMonitor = -1;
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') exitFullscreen(); });
-
-// ── MOBILE DETECTION — use screen width, not user agent ──────────────
-const IS_IOS = window.innerWidth < 1024 || window.screen.width < 1024;
-let mobileMode = IS_IOS; // mutable flag — toggled by switchToDesktop/switchToMobile
-
-if(mobileMode) {
-  document.body.classList.add('ios-mode');
-  layout = 1;
-}
-
-// Sync era button active state across both desktop and iOS drawer
-const _origSetDecade = setDecade;
-// setDecade is already defined above; we'll patch renderQueuePanel to also
-// update the iOS queue after it runs.
 
 // ── iOS DRAWER ───────────────────────────────────────────────────────
 function iosDrawerOpen(tab) {
