@@ -1277,6 +1277,9 @@ function scheduleAutoplay(){
 }
 function toggleAutoplay(){autoplay=!autoplay;document.getElementById('autoplay-toggle').classList.toggle('on',autoplay);if(autoplay)scheduleAutoplay();else clearTimeout(autoplayTimer);}
 
+// Declare searchTerm early — used inside renderQueuePanel
+let searchTerm = '';
+
 function renderQueuePanel(){
   const scroll=document.getElementById('queue-scroll'),active=new Set(playingIndices);
   scroll.innerHTML='';
@@ -1300,7 +1303,6 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ── SEARCH ────────────────────────────────────────────────────────────
-let searchTerm = '';
 function filterQueue(val) {
   searchTerm = val.trim().toLowerCase();
   const clearBtn = document.getElementById('search-clear');
