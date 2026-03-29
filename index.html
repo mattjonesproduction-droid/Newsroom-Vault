@@ -1,5 +1,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Newsroom Vault</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXY9WJQSQW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXY9WJQSQW');
+</script>
 <meta name="theme-color" content="#0c0d0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -906,6 +914,30 @@ const EVENTS = [
   // through the live tvnews search. The BBC Queen Elizabeth funeral is also on IA:
   { id:'BBCNEWS_20220918_180000_The_State_Funeral_of_HM_Queen...',
     title:'BBC News — Queen Elizabeth II State Funeral Eve (Sep 18 2022)',        year:'2022', decade:2020 },
+
+  // ── 9/11 — September 11 2001 ──────────────────────────────────────
+  { id:'television_archive_911_Summary',
+    title:'9/11 Multi-Network Coverage — ABC CBS NBC CNN Fox (Sep 11 2001)',      year:'2001', decade:2000 },
+  { id:'sept_11_tv_archive',
+    title:'September 11 Television Archive — 20+ Networks (2001)',                year:'2001', decade:2000 },
+  { id:'911_ABC_News_Special_Report_9-11-2001',
+    title:'ABC News Special Report — 9/11 Live Coverage (Sep 11 2001)',           year:'2001', decade:2000 },
+  { id:'911_CBS_News_Special_Report_09-11-2001',
+    title:'CBS News Special Report — 9/11 Live Coverage (Sep 11 2001)',           year:'2001', decade:2000 },
+  { id:'911_NBC_News_Special_Report_9-11-2001',
+    title:'NBC News Special Report — 9/11 Live Coverage (Sep 11 2001)',           year:'2001', decade:2000 },
+  { id:'911_CNN_Special_Report_September_11_2001',
+    title:'CNN Special Report — 9/11 Live Coverage (Sep 11 2001)',                year:'2001', decade:2000 },
+  { id:'911_BBC_News_Special_Report_September_11_2001',
+    title:'BBC News — 9/11 Coverage From London (Sep 11 2001)',                   year:'2001', decade:2000 },
+
+  // ── HURRICANE KATRINA — August 2005 ───────────────────────────────
+  { id:'wdsu-newschannel-6-newscast-2005-footage-x-264',
+    title:'WDSU NewsChannel 6 — New Orleans Katrina Coverage (Aug 2005)',         year:'2005', decade:2000 },
+  { id:'hurricanekatrina00cnnn',
+    title:'CNN — Hurricane Katrina: State of Emergency (Aug 2005)',               year:'2005', decade:2000 },
+  { id:'hurricane-andrew-as-it-happened',
+    title:'WTVJ NBC4 Miami — Hurricane Andrew As It Happened (Aug 1992)',         year:'1992', decade:1990 },
 ];
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1176,9 +1208,13 @@ async function fetchIA(dec){
     `collection:localnewsarchive AND mediatype:movies AND ${yr}`,
     `collection:tvnews AND mediatype:movies AND ${yr}`,
     `collection:newsandpublicaffairs AND mediatype:movies AND ${yr}`,
+    // 9/11 TV archive — only relevant for 2000s and ALL
+    ...(!dec || dec === 2000 ? [`collection:911 AND mediatype:movies`] : []),
+    // Prelinger Archives — rich pre-1970 newsreels and public affairs films
+    ...((!dec || dec <= 1970) ? [`collection:prelinger AND mediatype:movies AND ${yr} AND (title:(news OR newsreel OR report OR journal OR broadcast))`] : []),
   ];
 
-  const BLOCKLIST = /comedy|funny|cartoon|animation|sitcom|soap opera|game show|variety|music video|wrestling|howdy|doody|sketch|standup|stand-up|podcast|talk show|late night|tonight show|letterman|fallon|conan|kimmel|colbert|daily show|saturday night live/i;
+  const BLOCKLIST = /comedy|funny|cartoon|animation|sitcom|soap opera|game show|variety|music video|wrestling|howdy|doody|sketch|standup|stand-up|podcast|talk show|late night|tonight show|letterman|fallon|conan|kimmel|colbert|daily show|saturday night live|cooking|recipe|travel|travelogue|industrial film|safety film|training film|sales film|advertising|commercial|promotional|how to|instructional/i;
 
   const results = await Promise.allSettled(
     queries.map(q =>
