@@ -1,17 +1,16 @@
 <!-- SVG grain filter -->
 
-<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
-  <defs>
-    <filter id="grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise"/>
-      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
-      <feBlend in="SourceGraphic" in2="grayNoise" mode="overlay" result="blend"/>
-      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
-    </filter>
-  </defs>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">  <defs>
+<filter id="grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise"/>
+<feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+<feBlend in="SourceGraphic" in2="grayNoise" mode="overlay" result="blend"/>
+<feComposite in="blend" in2="SourceGraphic" operator="in"/>
+</filter>
+</defs>
 </svg>
+
 <!-- Report toast -->
-<div class="report-toast" id="report-toast">⚑ REPORTED — SKIPPING THIS FEED</div>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Newsroom Vault</title>
@@ -58,13 +57,23 @@
   --text-bright: #c8ccd8; --text-dim: #3a3f4a; --live: #4ae870;
   --metal: #1a1d24; --screw: #252830;
 }
-html { height: 100%; height: -webkit-fill-available; }
+html, body { height: 100%; height: -webkit-fill-available; margin: 0; padding: 0; }
 body {
   height: 100vh; height: -webkit-fill-available; min-height: 0; background: #08090b;
   background-image: linear-gradient(#1e2128 1px, transparent 1px), linear-gradient(90deg, #1e2128 1px, transparent 1px);
   background-size: 40px 40px;
   color: var(--text-bright); font-family: 'IBM Plex Mono', monospace;
   display: flex; flex-direction: column; overflow: hidden;
+}
+/* CodePen wraps in its own body — this ensures the background always covers */
+#app-root {
+  position: fixed; inset: 0;
+  background: #08090b;
+  background-image: linear-gradient(#1e2128 1px, transparent 1px), linear-gradient(90deg, #1e2128 1px, transparent 1px);
+  background-size: 40px 40px;
+  display: flex; flex-direction: column;
+  color: var(--text-bright); font-family: 'IBM Plex Mono', monospace;
+  overflow: hidden; z-index: 0;
 }
 .header { height: 48px; background: var(--metal); border-bottom: 2px solid var(--border-hot); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: relative; z-index: 100; flex-shrink: 0; }
 .header::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.4; }
@@ -107,9 +116,7 @@ body {
 .monitor::before, .monitor::after { content: '✕'; position: absolute; font-size: 7px; color: var(--screw); z-index: 20; pointer-events: none; }
 .monitor::before { top: 5px; left: 6px; } .monitor::after { top: 5px; right: 6px; }
 .monitor-inner { position: relative; flex: 1; overflow: hidden; background: #000; min-height: 0; }
-/* ── VIDEO FILTERS ─────────────────────────────────────────────────── */
-/* Each filter is a class on .monitor-inner or .monitor */
-/* Scanlines — already on by default via ::after, toggled by class */
+/* ── SCANLINES TOGGLE ─────────────────────────────────────────────── */
 .monitor-inner::after {
   content: '';
   position: absolute; inset: 0;
@@ -119,39 +126,9 @@ body {
 }
 body.no-scanlines .monitor-inner::after { opacity: 0; }
 
-/* CRT vignette */
-.monitor-inner::before {
-content: ‘’;
-position: absolute; inset: 0;
-pointer-events: none; z-index: 11;
-background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
-opacity: 0;
-transition: opacity 0.3s;
-}
-body.crt-vignette .monitor-inner::before { opacity: 1; }
-
-/* Noise grain via SVG filter */
-body.film-grain .monitor-inner iframe {
-filter: url(#grain);
-}
-
-/* Sepia */
-body.filter-sepia .monitor-inner iframe { filter: sepia(0.7) contrast(1.05); }
-
-/* B&W */
-body.filter-bw .monitor-inner iframe { filter: grayscale(1) contrast(1.1); }
-
-/* Combined filters */
-body.film-grain.filter-sepia .monitor-inner iframe { filter: sepia(0.7) contrast(1.05) url(#grain); }
-body.film-grain.filter-bw .monitor-inner iframe    { filter: grayscale(1) contrast(1.1) url(#grain); }
-
-/* Filter panel */
-.filter-panel { padding: 10px 14px 6px; border-top: 1px solid var(–border); }
-.filter-panel-title { font-size: 0.55rem; letter-spacing: 0.12em; color: var(–text-dim); margin-bottom: 8px; }
-.filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.filter-btn { background: var(–bg); border: 1px solid var(–border-hot); color: var(–text-dim); font-size: 0.55rem; letter-spacing: 0.08em; padding: 5px 4px; border-radius: 2px; cursor: pointer; text-align: center; transition: all 0.15s; font-family: inherit; }
-.filter-btn:hover { border-color: var(–text-dim); color: var(–text-bright); }
-.filter-btn.active { border-color: var(–accent2); color: var(–accent2); background: rgba(74,155,232,0.08); }
+/* Scanlines toggle row */
+.scanline-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(–border-hot); background: #0f1015; }
+.scanline-label { font-size: 0.6rem; color: var(–text); letter-spacing: 0.1em; }
 
 /* Report button on monitor label */
 .mon-report { flex: 0 0 auto; background: transparent; border: 1px solid transparent; color: var(–text-dim); font-size: 0.65rem; padding: 2px 5px; cursor: pointer; border-radius: 2px; line-height: 1; min-width: unset; letter-spacing: 0; transition: all 0.15s; opacity: 0.5; }
@@ -175,7 +152,7 @@ body.film-grain.filter-bw .monitor-inner iframe    { filter: grayscale(1) contra
 .mon-next { background: transparent; border: 1px solid var(–border-hot); color: var(–text-dim); font-size: 0.5rem; padding: 2px 6px; border-radius: 2px; cursor: pointer; line-height: 1; letter-spacing: 0.05em; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .mon-next:hover { border-color: var(–accent); color: var(–accent); background: rgba(232,200,74,0.06); }
 .side-panel { width: 240px; flex-shrink: 0; background: var(–metal); border-left: 1px solid var(–border-hot); display: flex; flex-direction: column; overflow: hidden; }
-.side-section { border-bottom: 1px solid var(–border); padding: 10px 14px; }
+.side-section { border-bottom: 1px solid var(–border-hot); padding: 10px 14px; background: var(–metal); }
 .side-section-title { font-family: ‘Barlow Condensed’, sans-serif; font-weight: 700; font-size: 0.65rem; letter-spacing: 0.3em; color: var(–text-dim); text-transform: uppercase; margin-bottom: 8px; }
 .grid-options { display: flex; gap: 6px; }
 .grid-opt { flex: 1; aspect-ratio: 1.5; border: 1px solid var(–border-hot); border-radius: 3px; background: var(–bg); cursor: pointer; display: grid; gap: 2px; padding: 4px; transition: all 0.15s; }
@@ -190,7 +167,7 @@ body.film-grain.filter-bw .monitor-inner iframe    { filter: grayscale(1) contra
 .era-btn { background: var(–bg); border: 1px solid var(–border); color: var(–text-dim); font-family: ‘IBM Plex Mono’, monospace; font-size: 0.62rem; letter-spacing: 0.1em; padding: 6px 4px; text-align: center; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
 .era-btn:hover { border-color: var(–text-dim); color: var(–text); }
 .era-btn.active { border-color: var(–accent); color: var(–accent); background: #1a1a10; }
-.queue-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(–border-hot) transparent; }
+.queue-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(–border-hot) transparent; background: var(–panel); }
 .q-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(–border); cursor: pointer; transition: background 0.1s; }
 .q-item:hover { background: rgba(255,255,255,0.02); }
 .q-item.playing { background: rgba(232,200,74,0.04); border-left: 2px solid var(–accent); }
@@ -296,6 +273,8 @@ overflow: hidden; padding-bottom: env(safe-area-inset-bottom);
 </style>
 
 <div class="fs-backdrop" id="fs-backdrop" onclick="exitFullscreen()"></div>
+<div id="app-root">
+<div class="report-toast" id="report-toast">⚑ REPORTED — SKIPPING THIS FEED</div>
 <div class="header">
   <div class="sys-id">
     <div class="sys-id-main">
@@ -345,19 +324,13 @@ overflow: hidden; padding-bottom: env(safe-area-inset-bottom);
       </div>
       <div id="search-status" class="search-status"></div>
     </div>
-    <div class="side-section-title" style="padding:6px 14px 0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.3em;color:var(--text-dim);text-transform:uppercase;">Queue <span id="q-count" style="color:var(--accent2)"></span></div>
+    <div class="side-section-title" style="padding:6px 14px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.3em;color:var(--text-dim);text-transform:uppercase;background:var(--metal);border-bottom:1px solid var(--border);">Queue <span id="q-count" style="color:var(--accent2)"></span></div>
     <div class="queue-scroll" id="queue-scroll">
       <div class="empty-state"><span class="spin"></span><br><br>Loading broadcasts...</div>
     </div>
-    <div class="filter-panel">
-      <div class="filter-panel-title">VIDEO FILTERS</div>
-      <div class="filter-grid">
-        <button class="filter-btn active" id="fb-scanlines" onclick="toggleFilter('scanlines')">⚌ SCANLINES</button>
-        <button class="filter-btn" id="fb-vignette"  onclick="toggleFilter('vignette')">◉ VIGNETTE</button>
-        <button class="filter-btn" id="fb-grain"     onclick="toggleFilter('grain')">▒ FILM GRAIN</button>
-        <button class="filter-btn" id="fb-bw"        onclick="toggleFilter('bw')">◑ B&amp;W</button>
-        <button class="filter-btn" id="fb-sepia"     onclick="toggleFilter('sepia')">▣ SEPIA</button>
-      </div>
+    <div class="scanline-row">
+      <span class="scanline-label">SCANLINES</span>
+      <div class="toggle on" id="scanlines-toggle" onclick="toggleScanlines()"></div>
     </div>
     <div class="controls-footer">
       <div class="ctrl-row">
@@ -383,6 +356,7 @@ overflow: hidden; padding-bottom: env(safe-area-inset-bottom);
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('era')">ERA</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('search')">SEARCH</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('queue')" id="ios-queue-btn">QUEUE</button>
+  <button class="ios-toolbar-btn" id="ios-scanlines-btn" onclick="toggleScanlines()" title="Toggle scanlines">⚌</button>
   <button class="ios-toolbar-btn" onclick="switchToDesktop()" style="border-color:#555;color:#666;" title="Switch to multi-feed desktop layout">⊞</button>
 </div>
 
@@ -432,6 +406,7 @@ overflow: hidden; padding-bottom: env(safe-area-inset-bottom);
     </div>
   </div>
 </div>
+</div><!-- /app-root -->
 
 <script>
 // ══════════════════════════════════════════════════════════════════════
@@ -1662,49 +1637,26 @@ function refreshAll(){shuffle(queue);assignAll();}function advanceMonitor(mi){
 }
 function refreshAll(){shuffle(queue);assignAll();}
 
-// ── VIDEO FILTERS ──────────────────────────────────────────────────────
-// Persist filter state in localStorage
-const FILTER_MAP = {
-  scanlines: { bodyClass:'no-scanlines', inverse:true }, // scanlines on by default
-  vignette:  { bodyClass:'crt-vignette', inverse:false },
-  grain:     { bodyClass:'film-grain',   inverse:false },
-  bw:        { bodyClass:'filter-bw',    inverse:false },
-  sepia:     { bodyClass:'filter-sepia', inverse:false },
-};
-// B&W and sepia are mutually exclusive
-function toggleFilter(key){
-  const f=FILTER_MAP[key];
-  if(!f) return;
-  // mutual exclusion: bw <-> sepia
-  if(key==='bw'   && document.body.classList.contains('filter-sepia')) toggleFilter('sepia');
-  if(key==='sepia'&& document.body.classList.contains('filter-bw'))    toggleFilter('bw');
-  const isOn = f.inverse
-    ? !document.body.classList.contains(f.bodyClass)  // scanlines: active = class absent
-    : document.body.classList.contains(f.bodyClass);
-  if(isOn){ document.body.classList.remove(f.bodyClass); }
-  else     { document.body.classList.add(f.bodyClass); }
-  const nowOn = f.inverse
-    ? !document.body.classList.contains(f.bodyClass)
-    : document.body.classList.contains(f.bodyClass);
-  const btn=document.getElementById('fb-'+key);
-  if(btn) btn.classList.toggle('active', nowOn);
-  // persist
-  try{ localStorage.setItem('nrv-filter-'+key, nowOn?'1':'0'); }catch(e){}
+// ── SCANLINES TOGGLE ───────────────────────────────────────────────────
+function toggleScanlines(){
+  const scanlinesOn = document.body.classList.toggle('no-scanlines') === false;
+  // desktop toggle pill
+  const dt=document.getElementById('scanlines-toggle');
+  if(dt) dt.classList.toggle('on', scanlinesOn);
+  // iOS toolbar button — highlight when on
+  const ib=document.getElementById('ios-scanlines-btn');
+  if(ib) ib.classList.toggle('active', scanlinesOn);
+  try{ localStorage.setItem('nrv-scanlines', scanlinesOn?'1':'0'); }catch(e){}
 }
-function initFilters(){
-  // scanlines on by default unless user turned off
+function initScanlines(){
   try{
-    Object.keys(FILTER_MAP).forEach(key=>{
-      const f=FILTER_MAP[key];
-      const stored=localStorage.getItem('nrv-filter-'+key);
-      // default state: scanlines=on, rest=off
-      const defaultOn = key==='scanlines';
-      const on = stored!==null ? stored==='1' : defaultOn;
-      if(f.inverse){ if(!on) document.body.classList.add(f.bodyClass); }
-      else          { if(on)  document.body.classList.add(f.bodyClass); }
-      const btn=document.getElementById('fb-'+key);
-      if(btn) btn.classList.toggle('active', on);
-    });
+    const stored=localStorage.getItem('nrv-scanlines');
+    const on = stored!==null ? stored==='1' : true;
+    if(!on) document.body.classList.add('no-scanlines');
+    const dt=document.getElementById('scanlines-toggle');
+    if(dt) dt.classList.toggle('on', on);
+    const ib=document.getElementById('ios-scanlines-btn');
+    if(ib) ib.classList.toggle('active', on);
   }catch(e){}
 }
 
@@ -1922,5 +1874,5 @@ function switchToMobile(){
   buildMonitors();
 }
 
-buildMonitors();buildQueue();initFilters();loadBadIdsFromStorage();
+buildMonitors();buildQueue();initScanlines();loadBadIdsFromStorage();
 </script>
