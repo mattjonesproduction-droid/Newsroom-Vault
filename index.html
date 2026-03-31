@@ -335,10 +335,16 @@ body.ios-mode .ios-toolbar {
     <div class="ios-tab-content" id="ios-tab-queue">
       <div class="queue-scroll" id="ios-queue-scroll-main" style="flex:1;"></div>
     </div>
-    <div class="ios-drawer-footer">
-      <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
-      <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
-      <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
+    <div class="ios-drawer-footer" style="flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+        <span style="font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;">Scanlines</span>
+        <div class="toggle on" id="ios-scanlines-toggle" onclick="toggleScanlines()" title="Toggle scanlines overlay"></div>
+      </div>
+      <div style="display:flex;gap:6px;width:100%;">
+        <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
+        <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
+        <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1294,13 +1300,18 @@ if(mobileMode){ document.body.classList.add('ios-mode'); layout=1; }
 
 let scanlines = localStorage.getItem('scanlines') !== 'off';
 (function applyScanlines(){
-  if(!scanlines){ document.body.classList.add('scanlines-off'); document.getElementById('scanlines-toggle').classList.remove('on'); }
+  if(!scanlines){
+    document.body.classList.add('scanlines-off');
+    document.getElementById('scanlines-toggle').classList.remove('on');
+    document.getElementById('ios-scanlines-toggle').classList.remove('on');
+  }
 })();
 
 function toggleScanlines(){
   scanlines = !scanlines;
   document.body.classList.toggle('scanlines-off', !scanlines);
   document.getElementById('scanlines-toggle').classList.toggle('on', scanlines);
+  document.getElementById('ios-scanlines-toggle').classList.toggle('on', scanlines);
   localStorage.setItem('scanlines', scanlines ? 'on' : 'off');
 }
 
