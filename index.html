@@ -75,6 +75,7 @@ body {
 .monitor::before { top: 5px; left: 6px; } .monitor::after { top: 5px; right: 6px; }
 .monitor-inner { position: relative; flex: 1; overflow: hidden; background: #000; min-height: 0; }
 .monitor-inner::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 10; background: repeating-linear-gradient(180deg, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px); }
+.scanlines-off .monitor-inner::after { display: none; }
 .monitor-inner iframe { width: 100%; height: 100%; border: none; display: block; }
 .mon-static { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 5; transition: opacity 0.6s; }
 .mon-static.gone { opacity: 0; pointer-events: none; }
@@ -265,6 +266,10 @@ body.ios-mode .ios-toolbar {
       <div class="empty-state"><span class="spin"></span><br><br>Loading broadcasts...</div>
     </div>
     <div class="controls-footer">
+      <div class="ctrl-row" style="align-items:center;justify-content:space-between;">
+        <span style="font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;">Scanlines</span>
+        <div class="toggle on" id="scanlines-toggle" onclick="toggleScanlines()" title="Toggle scanlines overlay"></div>
+      </div>
       <div class="ctrl-row">
         <button onclick="refreshAll()">↺ SHUFFLE</button>
         <button class="primary" onclick="advanceAll()">NEXT ALL ▶</button>
@@ -330,10 +335,16 @@ body.ios-mode .ios-toolbar {
     <div class="ios-tab-content" id="ios-tab-queue">
       <div class="queue-scroll" id="ios-queue-scroll-main" style="flex:1;"></div>
     </div>
-    <div class="ios-drawer-footer">
-      <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
-      <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
-      <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
+    <div class="ios-drawer-footer" style="flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+        <span style="font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;">Scanlines</span>
+        <div class="toggle on" id="ios-scanlines-toggle" onclick="toggleScanlines()" title="Toggle scanlines overlay"></div>
+      </div>
+      <div style="display:flex;gap:6px;width:100%;">
+        <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
+        <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
+        <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1286,6 +1297,23 @@ const badIds = new Set(); // IDs confirmed as 404/not found — never load again
 const IS_IOS = window.innerWidth < 1024 || window.screen.width < 1024;
 let mobileMode = IS_IOS;
 if(mobileMode){ document.body.classList.add('ios-mode'); layout=1; }
+
+let scanlines = localStorage.getItem('scanlines') !== 'off';
+(function applyScanlines(){
+  if(!scanlines){
+    document.body.classList.add('scanlines-off');
+    document.getElementById('scanlines-toggle').classList.remove('on');
+    document.getElementById('ios-scanlines-toggle').classList.remove('on');
+  }
+})();
+
+function toggleScanlines(){
+  scanlines = !scanlines;
+  document.body.classList.toggle('scanlines-off', !scanlines);
+  document.getElementById('scanlines-toggle').classList.toggle('on', scanlines);
+  document.getElementById('ios-scanlines-toggle').classList.toggle('on', scanlines);
+  localStorage.setItem('scanlines', scanlines ? 'on' : 'off');
+}
 
 function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.toTimeString().slice(0,8);}
 setInterval(updateClock,1000); updateClock();
