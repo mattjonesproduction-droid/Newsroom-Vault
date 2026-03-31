@@ -147,6 +147,8 @@ button.primary { background: var(--accent); color: #0a0800; border-color: var(--
 /* ── FULLSCREEN ── */
 .mon-fs { flex: 0 0 auto; background: transparent; border: 1px solid transparent; color: var(--text-dim); font-size: 0.85rem; padding: 2px 5px; cursor: pointer; border-radius: 2px; line-height: 1; min-width: unset; letter-spacing: 0; transition: all 0.15s; }
 .mon-fs:hover { color: var(--accent2); border-color: var(--accent2); background: transparent; }
+.mon-report { flex: 0 0 auto; background: transparent; border: 1px solid transparent; color: var(--text-dim); font-size: 0.75rem; padding: 2px 5px; cursor: pointer; border-radius: 2px; line-height: 1; min-width: unset; letter-spacing: 0; transition: all 0.15s; }
+.mon-report:hover { color: #e84a4a; border-color: #e84a4a; background: rgba(232,74,74,0.06); }
 .monitor.is-fullscreen { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9000 !important; border-radius: 0 !important; margin: 0 !important; }
 .monitor.is-fullscreen .monitor-inner { height: calc(100% - 32px) !important; }
 .monitor.is-fullscreen .mon-fs { color: var(--accent); }
@@ -166,6 +168,7 @@ body.ios-mode .mon-title { font-size: 0.65rem; }
 body.ios-mode .mon-year { font-size: 0.65rem; }
 body.ios-mode .mon-next { font-size: 0.72rem; padding: 8px 14px; border-color: var(--accent2); color: var(--accent2); }
 body.ios-mode .mon-fs { font-size: 1.1rem; padding: 6px 10px; }
+body.ios-mode .mon-report { font-size: 1.0rem; padding: 6px 10px; }
 /* iOS toolbar */
 .ios-toolbar { display: none; }
 body.ios-mode .ios-toolbar {
@@ -1313,6 +1316,27 @@ function toggleScanlines(){
   localStorage.setItem('scanlines', scanlines ? 'on' : 'off');
 }
 
+function reportBroken(mi){
+  const item = queue[playingIndices[mi]];
+  if(!item) return;
+  // Mark bad and advance immediately
+  badIds.add(item.id);
+  queue = queue.filter(q => !badIds.has(q.id));
+  advanceMonitor(mi);
+  // Build pre-filled GitHub issue
+  const title = encodeURIComponent(`Broken link: ${item.title}${item.year ? ' ('+item.year+')' : ''}`);
+  const body = encodeURIComponent(
+    `**Archive.org ID:** ${item.id}\n` +
+    `**Title:** ${item.title}\n` +
+    (item.year ? `**Year:** ${item.year}\n` : '') +
+    `**URL:** https://archive.org/details/${item.id}\n\n` +
+    `_Reported via Newsroom Vault_`
+  );
+  const ghUrl = `https://github.com/mattjonesproduction-droid/Newsroom-Vault/issues/new?title=${title}&body=${body}&labels=broken-link`;
+  const mailUrl = `mailto:?subject=${encodeURIComponent('Broken link: '+item.title)}&body=${encodeURIComponent('Archive.org ID: '+item.id+'\nURL: https://archive.org/details/'+item.id)}`;
+  if(!window.open(ghUrl, '_blank')) window.location.href = mailUrl;
+}
+
 function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.toTimeString().slice(0,8);}
 setInterval(updateClock,1000); updateClock();
 
@@ -1330,8 +1354,8 @@ function buildMonitors(){
   for(let i=0;i<cfg.count;i++){
     const m=document.createElement('div');
     m.className='monitor'+(i===0?' featured':'');
-    m.innerHTML=`<div class="monitor-inner"><iframe id="iframe-${i}" allowfullscreen allow="autoplay; fullscreen"></iframe><div class="mon-static" id="static-${i}"><div class="static-bars-sm"></div><div class="static-label">NO SIGNAL</div></div></div><div class="monitor-label"><span class="mon-ch">CH ${String(i+1).padStart(2,'0')}</span><span class="mon-title" id="title-${i}">—</span><span class="mon-year" id="year-${i}">—</span><button class="mon-next" onclick="advanceMonitor(${i});event.stopPropagation()">▶ NEXT</button><button class="mon-fs" onclick="toggleFullscreen(${i});event.stopPropagation()" title="Fullscreen">⛶</button><div class="mon-status loading" id="dot-${i}"></div></div>`;
-    m.onclick=e=>{if(e.target.tagName!=='IFRAME'&&!e.target.classList.contains('mon-next')&&!e.target.classList.contains('mon-fs'))document.querySelectorAll('.monitor').forEach((el,idx)=>el.classList.toggle('featured',idx===i));};
+    m.innerHTML=`<div class="monitor-inner"><iframe id="iframe-${i}" allowfullscreen allow="autoplay; fullscreen"></iframe><div class="mon-static" id="static-${i}"><div class="static-bars-sm"></div><div class="static-label">NO SIGNAL</div></div></div><div class="monitor-label"><span class="mon-ch">CH ${String(i+1).padStart(2,'0')}</span><span class="mon-title" id="title-${i}">—</span><span class="mon-year" id="year-${i}">—</span><button class="mon-next" onclick="advanceMonitor(${i});event.stopPropagation()">▶ NEXT</button><button class="mon-report" onclick="reportBroken(${i});event.stopPropagation()" title="Report broken link">⚑</button><button class="mon-fs" onclick="toggleFullscreen(${i});event.stopPropagation()" title="Fullscreen">⛶</button><div class="mon-status loading" id="dot-${i}"></div></div>`;
+    m.onclick=e=>{if(e.target.tagName!=='IFRAME'&&!e.target.classList.contains('mon-next')&&!e.target.classList.contains('mon-report')&&!e.target.classList.contains('mon-fs'))document.querySelectorAll('.monitor').forEach((el,idx)=>el.classList.toggle('featured',idx===i));};
     wall.appendChild(m);
     monitors.push({id:i,el:m,iframe:document.getElementById(`iframe-${i}`),staticEl:document.getElementById(`static-${i}`),titleEl:document.getElementById(`title-${i}`),yearEl:document.getElementById(`year-${i}`),dotEl:document.getElementById(`dot-${i}`)});
     playingIndices.push(-1);
