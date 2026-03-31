@@ -236,8 +236,8 @@ body.ios-mode .ios-toolbar {
     <div class="side-section">
       <div class="side-section-title">Display Layout</div>
       <div class="grid-options">
-        <div class="grid-opt" data-layout="1" onclick="setLayout(1)"><div class="gc"></div></div>
-        <div class="grid-opt active" data-layout="2" onclick="setLayout(2)"><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div></div>
+        <div class="grid-opt active" data-layout="1" onclick="setLayout(1)"><div class="gc"></div></div>
+        <div class="grid-opt" data-layout="2" onclick="setLayout(2)"><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div></div>
         <div class="grid-opt" data-layout="3" onclick="setLayout(3)"><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div></div>
       </div>
     </div>
@@ -1296,7 +1296,7 @@ const LOCAL_NEWS = [
 
 const LAYOUTS = { 1:{cols:1,rows:1,count:1}, 2:{cols:2,rows:2,count:4}, 3:{cols:3,rows:2,count:6} };
 
-let queue=[], playingIndices=[], layout=2, decade='all', monitors=[];
+let queue=[], playingIndices=[], layout=1, decade='all', monitors=[];
 const badIds = new Set(); // IDs confirmed as 404/not found — never load again
 
 // mobileMode declared early — used in buildMonitors before IS_IOS is evaluated
@@ -1778,7 +1778,7 @@ function iosClearSearch() {
 function switchToDesktop(){
   mobileMode = false;
   document.body.classList.remove('ios-mode');
-  layout = 2;
+  layout = 1;
   buildMonitors();
   // show a "back to mobile" button in the header
   const hdr = document.querySelector('.header');
