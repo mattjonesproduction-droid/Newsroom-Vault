@@ -293,6 +293,10 @@ body.ios-mode .ios-toolbar {
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('era')">ERA</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('search')">SEARCH</button>
   <button class="ios-toolbar-btn" onclick="iosDrawerOpen('queue')" id="ios-queue-btn">QUEUE</button>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;" onclick="toggleScanlines()" title="Toggle scanlines">
+    <div class="toggle on" id="ios-scanlines-toggle" style="pointer-events:none;"></div>
+    <span style="font-size:0.42rem;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;">LINES</span>
+  </div>
   <button class="ios-toolbar-btn" onclick="switchToDesktop()" style="border-color:#555;color:#666;" title="Switch to multi-feed desktop layout">⊞</button>
 </div>
 
@@ -335,16 +339,10 @@ body.ios-mode .ios-toolbar {
     <div class="ios-tab-content" id="ios-tab-queue">
       <div class="queue-scroll" id="ios-queue-scroll-main" style="flex:1;"></div>
     </div>
-    <div class="ios-drawer-footer" style="flex-direction:column;gap:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
-        <span style="font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;">Scanlines</span>
-        <div class="toggle on" id="ios-scanlines-toggle" onclick="toggleScanlines()" title="Toggle scanlines overlay"></div>
-      </div>
-      <div style="display:flex;gap:6px;width:100%;">
-        <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
-        <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
-        <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
-      </div>
+    <div class="ios-drawer-footer">
+      <button onclick="refreshAll();iosDrawerClose()">↺ SHUFFLE</button>
+      <button class="primary" onclick="advanceMonitor(0);iosDrawerClose()">▶ NEXT</button>
+      <button onclick="iosDrawerClose()" style="flex:0.5;">✕</button>
     </div>
   </div>
 </div>
