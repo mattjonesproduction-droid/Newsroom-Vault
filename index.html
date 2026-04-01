@@ -214,34 +214,38 @@ body.ios-mode .ios-toolbar {
 .load-more-btn:hover { opacity: 1; }
 /* ── THIS DAY IN HISTORY TICKER ── */
 .history-ticker {
-  height: 28px; background: #130f00; border-bottom: 2px solid var(--accent);
+  height: 36px; background: #130f00; border-bottom: 2px solid var(--accent);
   display: flex; align-items: center; overflow: hidden; flex-shrink: 0;
   cursor: pointer; transition: background 0.2s; position: relative; z-index: 50;
 }
 .history-ticker:hover { background: #1f1800; }
-body.ios-mode .history-ticker { height: 36px; }
 .history-ticker-label {
   flex-shrink: 0; background: var(--accent); color: #0a0800;
   font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
-  font-size: 0.6rem; letter-spacing: 0.25em; height: 100%;
+  font-size: 0.72rem; letter-spacing: 0.25em; height: 100%;
   display: flex; align-items: center; white-space: nowrap;
-  padding: 0 16px 0 12px;
+  padding: 0 18px 0 14px;
   clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%);
 }
 .history-ticker-date {
   flex-shrink: 0; color: var(--accent);
   font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-  font-size: 0.62rem; letter-spacing: 0.15em; padding: 0 14px;
+  font-size: 0.75rem; letter-spacing: 0.15em; padding: 0 16px;
   white-space: nowrap; border-right: 1px solid #2a2000;
 }
 .history-ticker-scroll { flex: 1; overflow: hidden; white-space: nowrap; min-width: 0; }
 .history-ticker-scroll-inner { display: inline-block; animation: history-tick 45s linear infinite; }
 @keyframes history-tick { 0%{transform:translateX(100vw)} 100%{transform:translateX(-100%)} }
-.history-ticker-text { color: var(--text-bright); font-size: 0.6rem; letter-spacing: 0.04em; }
+.history-ticker-text { color: var(--text-bright); font-size: 0.72rem; letter-spacing: 0.04em; }
 .history-ticker-cta {
-  color: var(--accent2); font-size: 0.58rem; letter-spacing: 0.12em; margin-left: 28px;
+  color: var(--accent2); font-size: 0.7rem; letter-spacing: 0.12em; margin-left: 28px;
   font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
 }
+body.ios-mode .history-ticker { height: 36px; }
+body.ios-mode .history-ticker-label { font-size: 0.6rem; padding: 0 16px 0 12px; }
+body.ios-mode .history-ticker-date { font-size: 0.62rem; padding: 0 12px; }
+body.ios-mode .history-ticker-text { font-size: 0.6rem; }
+body.ios-mode .history-ticker-cta { font-size: 0.58rem; }
 .history-ticker.watching .history-ticker-label { background: var(--live); }
 .history-ticker.watching .history-ticker-cta { color: var(--live); }
 </style>
