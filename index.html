@@ -1937,33 +1937,44 @@ function initHistoryTicker(){
   const now = new Date();
   const m = now.getMonth() + 1;
   const d = now.getDate();
-  const evt = THIS_DAY.find(e => e.month === m && e.day === d);
-  if(!evt) return;
-  _historyEvent = evt;
+  const evts = THIS_DAY.filter(e => e.month === m && e.day === d);
+  if(!evts.length) return;
+  _historyEvent = evts;
   const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  document.getElementById('history-date').textContent = `${MONTHS[m-1]} ${d}, ${evt.year}`;
-  document.getElementById('history-headline').textContent = evt.headline + '\u2003';
+  // Single event: show year in date strip. Multiple: year travels with each headline.
+  document.getElementById('history-date').textContent = evts.length === 1
+    ? `${MONTHS[m-1]} ${d}, ${evts[0].year}`
+    : `${MONTHS[m-1]} ${d}`;
+  document.getElementById('history-headline').textContent = evts.length === 1
+    ? evts[0].headline + '\u2003'
+    : evts.map(e => `${e.year} \u2014 ${e.headline}`).join('\u2003\u25C6\u2003') + '\u2003';
   document.getElementById('history-ticker').style.display = 'flex';
 }
 
 function loadHistoryEvent(){
   if(!_historyEvent) return;
-  // Resolve full metadata from data arrays, fall back to minimal item
   const lookup = new Map();
   for(const e of [...EVENTS, ...LOCAL_NEWS]){
     if(!lookup.has(e.id)) lookup.set(e.id, e);
   }
-  const items = _historyEvent.ids.map(id => {
-    const found = lookup.get(id);
-    if(found) return { id:found.id, title:found.title, subtitle:'Historic Broadcast', year:found.year || String(found.decade)+'s' };
-    return { id, title:_historyEvent.headline, subtitle:'Historic Broadcast', year:String(_historyEvent.year) };
-  }).filter(item => !badIds.has(item.id));
+  const seen = new Set();
+  const items = [];
+  for(const evt of _historyEvent){
+    for(const id of evt.ids){
+      if(seen.has(id) || badIds.has(id)) continue;
+      seen.add(id);
+      const found = lookup.get(id);
+      items.push(found
+        ? { id:found.id, title:found.title, subtitle:'Historic Broadcast', year:found.year || String(found.decade)+'s' }
+        : { id, title:evt.headline, subtitle:'Historic Broadcast', year:String(evt.year) }
+      );
+    }
+  }
   if(!items.length) return;
   queue = items;
   flushQueueUI();
   assignAll();
   if(mobileMode){ iosDrawerClose(); setTimeout(()=>{ if(queue.length) assignMonitor(0,0); }, 300); }
-  // Update ticker state
   const ticker = document.getElementById('history-ticker');
   ticker.classList.add('watching');
   document.getElementById('history-cta').textContent = '▶ NOW PLAYING';
