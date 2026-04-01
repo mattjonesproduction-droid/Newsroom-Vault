@@ -107,6 +107,10 @@ body {
 .era-btn:hover { border-color: var(--text-dim); color: var(--text); }
 .era-btn.active { border-color: var(--accent); color: var(--accent); background: #1a1a10; }
 .queue-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-hot) transparent; }
+.target-monitor-hint { display: none; padding: 5px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.52rem; letter-spacing: 0.1em; color: var(--text-dim); border-bottom: 1px solid var(--border); align-items: center; gap: 5px; text-transform: uppercase; }
+.target-monitor-hint.visible { display: flex; }
+.target-monitor-hint strong { color: var(--accent); font-weight: 700; font-size: 0.6rem; }
+.target-monitor-hint .hint-tip { color: var(--border-hot); font-size: 0.48rem; margin-left: 3px; }
 .q-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
 .q-item:hover { background: rgba(255,255,255,0.02); }
 .q-item.playing { background: rgba(232,200,74,0.04); border-left: 2px solid var(--accent); }
@@ -311,6 +315,7 @@ body.ios-mode .history-ticker-cta { font-size: 0.58rem; }
       <div id="search-status" class="search-status"></div>
     </div>
     <div class="side-section-title" style="padding:6px 14px 0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.3em;color:var(--text-dim);text-transform:uppercase;">Queue <span id="q-count" style="color:var(--accent2)"></span></div>
+    <div id="target-monitor-hint" class="target-monitor-hint"></div>
     <div class="queue-scroll" id="queue-scroll">
       <div class="empty-state"><span class="spin"></span><br><br>Loading broadcasts...</div>
     </div>
@@ -1426,7 +1431,7 @@ const THIS_DAY = [
 
 const LAYOUTS = { 1:{cols:1,rows:1,count:1}, 2:{cols:2,rows:2,count:4}, 3:{cols:3,rows:2,count:6} };
 
-let queue=[], playingIndices=[], layout=1, decade='all', monitors=[];
+let queue=[], playingIndices=[], layout=1, decade='all', monitors=[], selectedMonitor=0;
 const badIds = new Set(); // IDs confirmed as 404/not found — never load again
 
 // mobileMode declared early — used in buildMonitors before IS_IOS is evaluated
@@ -1485,12 +1490,12 @@ function buildMonitors(){
   const cfg=LAYOUTS[mobileMode?1:layout], wall=document.getElementById('monitor-wall');
   wall.style.gridTemplateColumns=`repeat(${cfg.cols},1fr)`;
   wall.style.gridTemplateRows=`repeat(${cfg.rows},1fr)`;
-  wall.innerHTML=''; monitors=[]; playingIndices=[];
+  wall.innerHTML=''; monitors=[]; playingIndices=[]; selectedMonitor=0;
   for(let i=0;i<cfg.count;i++){
     const m=document.createElement('div');
     m.className='monitor'+(i===0?' featured':'');
     m.innerHTML=`<div class="monitor-inner"><iframe id="iframe-${i}" allowfullscreen allow="autoplay; fullscreen"></iframe><div class="mon-static" id="static-${i}"><div class="static-bars-sm"></div><div class="static-label">NO SIGNAL</div></div></div><div class="monitor-label"><span class="mon-ch">CH ${String(i+1).padStart(2,'0')}</span><span class="mon-title" id="title-${i}">—</span><span class="mon-year" id="year-${i}">—</span><button class="mon-next" onclick="advanceMonitor(${i});event.stopPropagation()">▶ NEXT</button><button class="mon-report" onclick="reportBroken(${i});event.stopPropagation()" title="Report broken link">⚑</button><button class="mon-fs" onclick="toggleFullscreen(${i});event.stopPropagation()" title="Fullscreen">⛶</button><div class="mon-status loading" id="dot-${i}"></div></div>`;
-    m.onclick=e=>{if(e.target.tagName!=='IFRAME'&&!e.target.classList.contains('mon-next')&&!e.target.classList.contains('mon-report')&&!e.target.classList.contains('mon-fs'))document.querySelectorAll('.monitor').forEach((el,idx)=>el.classList.toggle('featured',idx===i));};
+    m.onclick=e=>{if(e.target.tagName!=='IFRAME'&&!e.target.classList.contains('mon-next')&&!e.target.classList.contains('mon-report')&&!e.target.classList.contains('mon-fs')){document.querySelectorAll('.monitor').forEach((el,idx)=>el.classList.toggle('featured',idx===i));selectedMonitor=i;updateTargetMonitorHint();}};
     wall.appendChild(m);
     monitors.push({id:i,el:m,iframe:document.getElementById(`iframe-${i}`),staticEl:document.getElementById(`static-${i}`),titleEl:document.getElementById(`title-${i}`),yearEl:document.getElementById(`year-${i}`),dotEl:document.getElementById(`dot-${i}`)});
     playingIndices.push(-1);
@@ -1498,6 +1503,7 @@ function buildMonitors(){
   document.getElementById('active-feeds').textContent=cfg.count;
   document.getElementById('s-feeds').textContent=`${cfg.count} FEEDS`;
   if(queue.length>0) assignAll();
+  updateTargetMonitorHint();
 }
 
 function setDecade(btn){
@@ -1753,6 +1759,17 @@ function refreshAll(){shuffle(queue);assignAll();}
 
 function toggleAutoplay(){}
 
+function updateTargetMonitorHint(){
+  const hint=document.getElementById('target-monitor-hint');
+  if(!hint)return;
+  if(layout>1){
+    hint.classList.add('visible');
+    hint.innerHTML=`<span>LOAD INTO</span> <strong>CH ${String(selectedMonitor+1).padStart(2,'0')}</strong><span class="hint-tip">— click a monitor to change</span>`;
+  } else {
+    hint.classList.remove('visible');
+  }
+}
+
 // Declare searchTerm early — used inside renderQueuePanel
 let searchTerm = '';
 
@@ -1763,7 +1780,7 @@ function renderQueuePanel(){
     const playing=active.has(i),div=document.createElement('div');
     div.className='q-item'+(playing?' playing':'');
     div.innerHTML=`<span class="q-num">${String(i+1).padStart(2,'0')}</span><div class="q-info"><div class="q-title" title="${esc(item.title)}">${esc(item.title)}</div><div class="q-meta">${esc(item.subtitle||item.year||'')}</div></div>`;
-    div.onclick=()=>{const t=monitors.findIndex((_,mi)=>playingIndices[mi]!==i);assignMonitor(t>=0?t:0,i);playingIndices[t>=0?t:0]=i;};
+    div.onclick=()=>{const t=layout>1?selectedMonitor:monitors.findIndex((_,mi)=>playingIndices[mi]!==i);assignMonitor(t>=0?t:0,i);};
     scroll.appendChild(div);
   });
   const fp=scroll.querySelector('.playing');if(fp)fp.scrollIntoView({block:'nearest',behavior:'smooth'});
