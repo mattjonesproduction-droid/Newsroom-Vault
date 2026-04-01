@@ -212,6 +212,38 @@ body.ios-mode .ios-toolbar {
 .ios-drawer-footer button { padding: 12px; font-size: 0.65rem; }
 .load-more-btn { padding: 10px 14px; font-size: 0.58rem; color: var(--accent2); letter-spacing: 0.12em; cursor: pointer; text-align: center; border-top: 1px solid var(--border); opacity: 0.7; transition: opacity 0.15s; }
 .load-more-btn:hover { opacity: 1; }
+/* ── THIS DAY IN HISTORY TICKER ── */
+.history-ticker {
+  height: 28px; background: #130f00; border-bottom: 2px solid var(--accent);
+  display: flex; align-items: center; overflow: hidden; flex-shrink: 0;
+  cursor: pointer; transition: background 0.2s; position: relative; z-index: 50;
+}
+.history-ticker:hover { background: #1f1800; }
+body.ios-mode .history-ticker { height: 36px; }
+.history-ticker-label {
+  flex-shrink: 0; background: var(--accent); color: #0a0800;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+  font-size: 0.6rem; letter-spacing: 0.25em; height: 100%;
+  display: flex; align-items: center; white-space: nowrap;
+  padding: 0 16px 0 12px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%);
+}
+.history-ticker-date {
+  flex-shrink: 0; color: var(--accent);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 0.62rem; letter-spacing: 0.15em; padding: 0 14px;
+  white-space: nowrap; border-right: 1px solid #2a2000;
+}
+.history-ticker-scroll { flex: 1; overflow: hidden; white-space: nowrap; min-width: 0; }
+.history-ticker-scroll-inner { display: inline-block; animation: history-tick 45s linear infinite; }
+@keyframes history-tick { 0%{transform:translateX(100vw)} 100%{transform:translateX(-100%)} }
+.history-ticker-text { color: var(--text-bright); font-size: 0.6rem; letter-spacing: 0.04em; }
+.history-ticker-cta {
+  color: var(--accent2); font-size: 0.58rem; letter-spacing: 0.12em; margin-left: 28px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+}
+.history-ticker.watching .history-ticker-label { background: var(--live); }
+.history-ticker.watching .history-ticker-cta { color: var(--live); }
 </style>
 
 <div class="fs-backdrop" id="fs-backdrop" onclick="exitFullscreen()"></div>
@@ -228,6 +260,16 @@ body.ios-mode .ios-toolbar {
     <div class="feed-count">FEEDS: <strong id="active-feeds">0</strong></div>
   </div>
   <div class="clock" id="clock">--:--:--</div>
+</div>
+
+<div id="history-ticker" class="history-ticker" style="display:none;" onclick="loadHistoryEvent()">
+  <div class="history-ticker-label">ON THIS DAY</div>
+  <div class="history-ticker-date" id="history-date"></div>
+  <div class="history-ticker-scroll">
+    <span class="history-ticker-scroll-inner">
+      <span class="history-ticker-text" id="history-headline"></span><span class="history-ticker-cta" id="history-cta">▶ CLICK HERE TO WATCH COVERAGE</span>
+    </span>
+  </div>
 </div>
 
 <div class="layout">
@@ -1294,6 +1336,85 @@ const LOCAL_NEWS = [
     market:'Los Angeles', decade:1960 },
 ];
 
+// ══════════════════════════════════════════════════════════════════════
+// THIS DAY IN HISTORY — date-keyed events with archive.org clip IDs
+// Format: { month, day, year, headline, ids:[] }
+// ══════════════════════════════════════════════════════════════════════
+const THIS_DAY = [
+  // January
+  { month:1, day:16, year:1991, headline:'Operation Desert Storm begins — U.S.-led coalition launches air war against Iraq',
+    ids:['dvd-transfer-76','gulf-war-tape-1-1991-01-14-cnn-persian-gulf-crisis-1h-1991-01-16-6-00pm-7-30pm-p'] },
+  { month:1, day:17, year:1994, headline:'A 6.7-magnitude earthquake strikes the Northridge neighborhood of Los Angeles before dawn',
+    ids:['capture-a-5299'] },
+  { month:1, day:28, year:1986, headline:'Space Shuttle Challenger explodes 73 seconds after launch, killing all 7 crew members',
+    ids:['space-shuttle-challenger-explosion-live-news-coverage','space-shuttle-challenger-disaster-january-28-1986','shuttle_202210','ChallengerDisaster'] },
+  // February
+  { month:2, day:1,  year:2003, headline:'Space Shuttle Columbia disintegrates on re-entry over Texas, killing all 7 crew members',
+    ids:['space-shuttle-columbia-disaster-february-1-2003'] },
+  { month:2, day:23, year:1991, headline:'Coalition ground forces launch the 100-Hour War to liberate Kuwait from Iraqi occupation',
+    ids:['cnngulfwar-91'] },
+  // March
+  { month:3, day:31, year:1995, headline:'Tejano pop star Selena Quintanilla-Pérez is shot and killed in Corpus Christi, TX',
+    ids:['kris-6-corpus-christi-march-31-1995-selena-killed','woai-march-31-1995-selena-killed'] },
+  // April
+  { month:4, day:4,  year:1968, headline:'Dr. Martin Luther King Jr. is assassinated at the Lorraine Motel in Memphis, TN',
+    ids:['1960-1969RadioNews'] },
+  { month:4, day:8,  year:1994, headline:'Kurt Cobain, frontman of Nirvana, is found dead at his Seattle home at age 27',
+    ids:['youtube-OV0Ml3hLGuA'] },
+  { month:4, day:19, year:1995, headline:'A truck bomb destroys the Alfred P. Murrah Federal Building in Oklahoma City, killing 168 people',
+    ids:['oklahoma-city-bombing-coverage-april-19-21-1995'] },
+  { month:4, day:29, year:1986, headline:'CBS Evening News first reports on the explosion at the Chernobyl nuclear power plant in the USSR',
+    ids:['cbs-evening-news-april-29-1986-chernobyl-explosion'] },
+  { month:4, day:30, year:1992, headline:'Los Angeles erupts in riots after officers who beat Rodney King are acquitted',
+    ids:['la-riots-april-30-1992','losangelesrodneykingriotsrawunseenfootagein1992'] },
+  // May
+  { month:5, day:13, year:1985, headline:'Philadelphia police drop a bomb on a residential neighborhood during a standoff with MOVE',
+    ids:['TheBombingofWestPhilly'] },
+  // June
+  { month:6, day:5,  year:1968, headline:'Senator Robert F. Kennedy is shot moments after winning the California Democratic primary',
+    ids:['cbs-news-special-some-friends-of-robert-kennedy-june-6-1968'] },
+  { month:6, day:6,  year:1944, headline:'D-Day — Allied forces storm the beaches of Normandy in the largest seaborne invasion in history',
+    ids:['Complete_Broadcast_Day_D-Day','CBD440606CBSDDayCBS','NBCCompleteBroadcastDDay'] },
+  { month:6, day:17, year:1994, headline:'O.J. Simpson leads police on a live-televised low-speed chase along the I-405 freeway',
+    ids:['abc-2020-and-special-report-coverage-of-oj-simpson-bronco-chase-6171994'] },
+  { month:6, day:25, year:2009, headline:'Pop superstar Michael Jackson dies of cardiac arrest at his Los Angeles home at age 50',
+    ids:['abc-news-special-report-june-25-2009','Michael_Jackson_The_Farewell'] },
+  // July
+  { month:7, day:14, year:1977, headline:'A massive blackout plunges all of New York City into darkness, sparking widespread looting',
+    ids:['acompilationoflocalnewyorkstationsreportingontheblackoutandtheaftermathinjuly141977','a-look-back-major-blackout-hits-new-york-city-on-july-13-1977'] },
+  { month:7, day:16, year:1969, headline:"Apollo 11 launches from Kennedy Space Center — mankind's first mission to land on the Moon",
+    ids:['CSPAN_20190720_000000_CBS_Coverage_of_the_Apollo_11_Launch'] },
+  { month:7, day:20, year:1969, headline:'"One giant leap for mankind" — Neil Armstrong becomes the first human to walk on the Moon',
+    ids:['CSPAN_20190721_000100_CBS_Coverage_of_Apollo_11_Moonwalk','CSPAN_20190721_030000_CBS_Coverage_of_Apollo_11_Moonwalk'] },
+  // August
+  { month:8, day:24, year:1992, headline:'Hurricane Andrew, one of the costliest storms in U.S. history, makes landfall in South Florida',
+    ids:['hurricane-andrew-as-it-happened'] },
+  { month:8, day:31, year:1997, headline:'Princess Diana is killed in a car crash in a Paris tunnel — the world mourns',
+    ids:['vhsvault_BBC_News_Coverage_of_Princess_Diana_s_Death_9_30pm_31st_August_1997'] },
+  // September
+  { month:9, day:6,  year:1997, headline:'Princess Diana is laid to rest at Westminster Abbey in one of the most-watched funerals in history',
+    ids:['diana-funeral-service','the-funeral-of-princess-diana-6th-september-1997','princess-dianas-funeral-fox-news-broadcast-1997'] },
+  { month:9, day:11, year:2001, headline:'Terrorist attacks destroy the World Trade Center and strike the Pentagon — America under attack',
+    ids:['sept_11_tv_archive','911_ABC_News_Special_Report_9-11-2001','911_CBS_News_Special_Report_09-11-2001','911_NBC_News_Special_Report_9-11-2001','WRC_20010911_110000_Today'] },
+  { month:9, day:18, year:2022, headline:'The State Funeral of Her Majesty Queen Elizabeth II — 70 years on the throne',
+    ids:['BBCNEWS_20220918_180000_The_State_Funeral_of_HM_Queen...'] },
+  // October
+  { month:10, day:17, year:1989, headline:'The 6.9-magnitude Loma Prieta earthquake strikes the Bay Area live during the World Series on ABC',
+    ids:['1989BayAreaEarthquake','kpix-loma-prieta-earthquake-coverage-october-18-1989'] },
+  // November
+  { month:11, day:9,  year:1989, headline:'The Berlin Wall falls — East Germany opens its borders and jubilant crowds tear down the wall',
+    ids:['berlin-wall-1989-nbc-news-special-reports','CSPAN3_20191110_030100_Reel_America_Fall_of_the_Berlin_Wall_NBC_News_Special_Reports_-_1989','TheFallOfTheBerlinWall1989'] },
+  { month:11, day:18, year:1978, headline:'Over 900 members of the Peoples Temple die in a mass murder-suicide at Jonestown, Guyana',
+    ids:['jonestownvideo01'] },
+  { month:11, day:22, year:1963, headline:"President John F. Kennedy is assassinated in Dallas — Walter Cronkite breaks the news",
+    ids:['jfk1122631','cbsnewspresidentkennedyassassination112319631200p.me.t533p.me.t','saturdaynovember23rd1963nbcnewscoverageoftheassassinationofpresidentkennedy.coverage'] },
+  { month:11, day:27, year:1978, headline:'San Francisco Mayor George Moscone and Supervisor Harvey Milk are assassinated at City Hall',
+    ids:['pra-AZ0684'] },
+  // December
+  { month:12, day:8,  year:1980, headline:'John Lennon is shot and killed outside his apartment building, the Dakota, in New York City',
+    ids:['youtube-TbkTSyCJq9k'] },
+];
+
 const LAYOUTS = { 1:{cols:1,rows:1,count:1}, 2:{cols:2,rows:2,count:4}, 3:{cols:3,rows:2,count:6} };
 
 let queue=[], playingIndices=[], layout=1, decade='all', monitors=[];
@@ -1800,5 +1921,44 @@ function switchToMobile(){
   buildMonitors();
 }
 
-buildMonitors();buildQueue();
+// ── THIS DAY IN HISTORY ───────────────────────────────────────────────
+let _historyEvent = null;
+
+function initHistoryTicker(){
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const evt = THIS_DAY.find(e => e.month === m && e.day === d);
+  if(!evt) return;
+  _historyEvent = evt;
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('history-date').textContent = `${MONTHS[m-1]} ${d}, ${evt.year}`;
+  document.getElementById('history-headline').textContent = evt.headline + '\u2003';
+  document.getElementById('history-ticker').style.display = 'flex';
+}
+
+function loadHistoryEvent(){
+  if(!_historyEvent) return;
+  // Resolve full metadata from data arrays, fall back to minimal item
+  const lookup = new Map();
+  for(const e of [...EVENTS, ...LOCAL_NEWS]){
+    if(!lookup.has(e.id)) lookup.set(e.id, e);
+  }
+  const items = _historyEvent.ids.map(id => {
+    const found = lookup.get(id);
+    if(found) return { id:found.id, title:found.title, subtitle:'Historic Broadcast', year:found.year || String(found.decade)+'s' };
+    return { id, title:_historyEvent.headline, subtitle:'Historic Broadcast', year:String(_historyEvent.year) };
+  }).filter(item => !badIds.has(item.id));
+  if(!items.length) return;
+  queue = items;
+  flushQueueUI();
+  assignAll();
+  if(mobileMode){ iosDrawerClose(); setTimeout(()=>{ if(queue.length) assignMonitor(0,0); }, 300); }
+  // Update ticker state
+  const ticker = document.getElementById('history-ticker');
+  ticker.classList.add('watching');
+  document.getElementById('history-cta').textContent = '▶ NOW PLAYING';
+}
+
+buildMonitors();buildQueue();initHistoryTicker();
 </script>
