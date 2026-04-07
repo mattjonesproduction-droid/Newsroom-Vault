@@ -1376,6 +1376,8 @@ const THIS_DAY = [
     ids:['nbc-news-special-report-pope-john-paul-ii-death-apr-2-2005','pope-john-paul-ii-dies-at-84-abc-world-news-tonight-april-2-2005'] },
   { month:4, day:4,  year:1968, headline:'Dr. Martin Luther King Jr. is assassinated at the Lorraine Motel in Memphis, TN',
     ids:['1960-1969RadioNews'] },
+  { month:4, day:7,  year:2001, headline:'NASA\'s Mars Odyssey spacecraft launches from Cape Canaveral, beginning its journey to map the Martian surface',
+    ids:['wfla-news-channel-8-at-11-weekend-edition-april-7-2001'], starts:[665] },
   { month:4, day:8,  year:1994, headline:'Kurt Cobain, frontman of Nirvana, is found dead at his Seattle home at age 27',
     ids:['youtube-OV0Ml3hLGuA'] },
   { month:4, day:19, year:1995, headline:'A truck bomb destroys the Alfred P. Murrah Federal Building in Oklahoma City, killing 168 people',
@@ -1711,7 +1713,7 @@ function assignMonitor(mi,qi){
   m.staticEl.classList.remove('gone');m.dotEl.className='mon-status loading';
   m.titleEl.textContent=item.subtitle||item.title;
   m.yearEl.textContent=item.year||'';
-  m.iframe.src=`https://archive.org/embed/${item.id}?autoplay=1&start=0`;
+  m.iframe.src=`https://archive.org/embed/${item.id}?autoplay=1&start=${item.start??0}`;
 
   // Clear any existing error-check timer for this monitor
   if(m._errorTimer) clearInterval(m._errorTimer);
@@ -1979,13 +1981,15 @@ function loadHistoryEvent(){
   const seen = new Set();
   const items = [];
   for(const evt of _historyEvent){
-    for(const id of evt.ids){
+    for(let i=0;i<evt.ids.length;i++){
+      const id=evt.ids[i];
       if(seen.has(id) || badIds.has(id)) continue;
       seen.add(id);
       const found = lookup.get(id);
+      const start = evt.starts?.[i];
       items.push(found
-        ? { id:found.id, title:found.title, subtitle:'Historic Broadcast', year:found.year || String(found.decade)+'s' }
-        : { id, title:evt.headline, subtitle:'Historic Broadcast', year:String(evt.year) }
+        ? { id:found.id, title:found.title, subtitle:'Historic Broadcast', year:found.year || String(found.decade)+'s', ...(start!=null&&{start}) }
+        : { id, title:evt.headline, subtitle:'Historic Broadcast', year:String(evt.year), ...(start!=null&&{start}) }
       );
     }
   }
